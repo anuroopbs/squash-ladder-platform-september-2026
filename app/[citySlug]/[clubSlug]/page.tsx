@@ -4,6 +4,7 @@ import { getClubBySlug } from "@/lib/queries/clubs";
 import { getMainLadderForClub, getLadderStandings } from "@/lib/queries/ladders";
 import { Breadcrumbs } from "@/components/location/Breadcrumbs";
 import { LadderTable } from "@/components/ladder/LadderTable";
+import { JoinLadderButton } from "@/components/ladder/JoinLadderButton";
 
 export const revalidate = 60;
 
@@ -33,7 +34,8 @@ return createElement(
     createElement(LadderTable, {
       ladderName: ladder?.name ?? "Main Ladder",
       standings,
-    })
+    }),
+    ladder && createElement(JoinLadderButton, { ladderId: ladder.id })
     )
   );
 }
