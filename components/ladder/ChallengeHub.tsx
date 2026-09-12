@@ -6,6 +6,17 @@ import { createClient } from "@/lib/supabase/client";
 import type { Challenge, Match } from "@/lib/types/database";
 import type { LadderStanding } from "@/lib/queries/ladders";
 
+// How long a challenged player has to accept/decline before the challenge
+// auto-expires, and how long a reported match can sit unconfirmed before
+// we flag it as overdue in the UI. There was previously no rule at all —
+// a pending challenge or unconfirmed match could sit forever.
+const CHALLENGE_EXPIRY_DAYS = 7;
+const MATCH_OVERDUE_DAYS = 3;
+
+function daysSince(dateStr: string) {
+  return (Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24);
+}
+
 export function ChallengeHub({ ladderId, standings }: { ladderId: string; standings: LadderStanding[] }) {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
@@ -31,7 +42,30 @@ export function ChallengeHub({ ladderId, standings }: { ladderId: string; standi
       supabase.from("matches").select("*").eq("ladder_id", ladderId).order("created_at", { ascending: false }).limit(15),
     ]);
 
-    setChallenges((challengeRows ?? []) as Challenge[]);
+    // Lazily expire stale pending challenges: since there's no server-side
+    // scheduled job in this setup, expiry is applied whenever a participant
+    // happens to load this ladder page — the RLS policy that lets either
+    // participant update their own challenge already allows this, no new
+    // policy needed. A challenge past CHALLENGE_EXPIRY_DAYS still in
+    // "pending" flips to the existing "expired" status.
+    const currentChallengeRows = (challengeRows ?? []) as Challenge[];
+    const staleIds = currentChallengeRows
+      .filter((c) => c.status === "pending" && daysSince(c.created_at) > CHALLENGE_EXPIRY_DAYS)
+      .filter((c) => user && (c.challenger_id === user.id || c.challenged_id === user.id))
+      .map((c) => c.id);
+
+    if (staleIds.length > 0) {
+      await supabase.from("challenges").update({ status: "expired" }).in("id", staleIds);
+      const { data: refreshedChallengeRows } = await supabase
+        .from("challenges")
+        .select("*")
+        .eq("ladder_id", ladderId)
+        .order("created_at", { ascending: false });
+      setChallenges((refreshedChallengeRows ?? []) as Challenge[]);
+    } else {
+      setChallenges(currentChallengeRows);
+    }
+
     setMatches((matchRows ?? []) as Match[]);
     setLoading(false);
   }
@@ -192,6 +226,11 @@ export function ChallengeHub({ ladderId, standings }: { ladderId: string; standi
             { onClick: sendChallenge, disabled: !opponentId || busyId === "new-challenge", className: buttonClass },
             busyId === "new-challenge" ? "Sending…" : "Send challenge"
           )
+        ),
+        h(
+          "p",
+          { className: "mt-2 text-xs text-white/40" },
+          `A challenge auto-expires after ${CHALLENGE_EXPIRY_DAYS} days if it isn't accepted or declined.`
         )
       )
     );
@@ -209,12 +248,20 @@ export function ChallengeHub({ ladderId, standings }: { ladderId: string; standi
           myActiveChallenges.map((c) => {
             const isChallenger = c.challenger_id === userId;
             const opponentName = isChallenger ? nameOf(c.challenged_id) : nameOf(c.challenger_id);
+            const daysLeft = Math.max(0, Math.ceil(CHALLENGE_EXPIRY_DAYS - daysSince(c.created_at)));
+            const expiryNote =
+              daysLeft <= 1 ? "expires today" : `${daysLeft} day${daysLeft === 1 ? "" : "s"} left to respond`;
 
             if (c.status === "pending" && !isChallenger) {
               return h(
                 "li",
                 { key: c.id, className: "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between" },
-                h("span", { className: "text-sm text-white/70" }, `${opponentName} challenged you`),
+                h(
+                  "span",
+                  { className: "text-sm text-white/70" },
+                  `${opponentName} challenged you — `,
+                  h("span", { className: "text-white/45" }, expiryNote)
+                ),
                 h(
                   "div",
                   { className: "flex gap-2" },
@@ -236,7 +283,11 @@ export function ChallengeHub({ ladderId, standings }: { ladderId: string; standi
               return h(
                 "li",
                 { key: c.id, className: "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between" },
-                h("span", { className: "text-sm text-white/50" }, `You challenged ${opponentName} — pending`),
+                h(
+                  "span",
+                  { className: "text-sm text-white/50" },
+                  `You challenged ${opponentName} — pending (${expiryNote})`
+                ),
                 h(
                   "button",
                   { onClick: () => respondToChallenge(c.id, "declined"), disabled: busyId === c.id, className: ghostButtonClass },
@@ -312,6 +363,20 @@ export function ChallengeHub({ ladderId, standings }: { ladderId: string; standi
               m.status === "pending_confirmation" &&
               userId !== m.reported_by &&
               (userId === m.player1_id || userId === m.player2_id);
+            const overdue = m.status === "pending_confirmation" && daysSince(m.created_at) > MATCH_OVERDUE_DAYS;
+
+            let statusLabel = "Awaiting confirmation";
+            let statusClass = "text-xs font-medium text-white/40";
+            if (m.status === "confirmed") {
+              statusLabel = "Confirmed";
+              statusClass = "text-xs font-medium text-court-300";
+            } else if (m.status === "disputed") {
+              statusLabel = "Disputed";
+              statusClass = "text-xs font-medium text-red-300";
+            } else if (overdue) {
+              statusLabel = "Awaiting confirmation — overdue";
+              statusClass = "text-xs font-medium text-amber-300";
+            }
 
             return h(
               "li",
@@ -320,18 +385,7 @@ export function ChallengeHub({ ladderId, standings }: { ladderId: string; standi
                 "div",
                 { className: "flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between" },
                 h("span", { className: "text-sm text-white" }, `${winnerName} def. ${loserName}, ${m.score}`),
-                h(
-                  "span",
-                  {
-                    className:
-                      m.status === "confirmed"
-                        ? "text-xs font-medium text-court-300"
-                        : m.status === "disputed"
-                        ? "text-xs font-medium text-red-300"
-                        : "text-xs font-medium text-white/40",
-                  },
-                  m.status === "confirmed" ? "Confirmed" : m.status === "disputed" ? "Disputed" : "Awaiting confirmation"
-                )
+                h("span", { className: statusClass }, statusLabel)
               ),
               canRespond &&
                 h(
