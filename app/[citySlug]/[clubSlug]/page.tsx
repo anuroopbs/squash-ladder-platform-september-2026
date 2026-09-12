@@ -6,6 +6,7 @@ import { Breadcrumbs } from "@/components/location/Breadcrumbs";
 import { LadderTable } from "@/components/ladder/LadderTable";
 import { JoinLadderButton } from "@/components/ladder/JoinLadderButton";
 import { ChallengeHub } from "@/components/ladder/ChallengeHub";
+import { EditEntityButton } from "@/components/shared/EditEntityButton";
 
 export const revalidate = 60;
 
@@ -23,9 +24,23 @@ export default async function ClubHubPage({ params }: { params: { citySlug: stri
     { className: "mx-auto max-w-4xl px-6 py-12 sm:py-16" },
     createElement(Breadcrumbs, { city, club }),
     createElement(
-      "h1",
-      { className: "mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl" },
-      club.name
+      "div",
+      { className: "mt-6 flex items-start justify-between gap-4" },
+      createElement(
+        "h1",
+        { className: "text-3xl font-bold tracking-tight text-white sm:text-4xl" },
+        club.name
+      ),
+      createElement(EditEntityButton, {
+        table: "clubs",
+        id: club.id,
+        createdBy: club.created_by,
+        fields: [
+          { key: "name", label: "Club name", value: club.name },
+          { key: "address", label: "Address", value: club.address },
+          { key: "description", label: "Description", value: club.description, multiline: true },
+        ],
+      })
     ),
     club.address && createElement("p", { className: "mt-2 text-white/50" }, club.address),
     club.description && createElement("p", { className: "mt-4 max-w-2xl text-white/60" }, club.description),
