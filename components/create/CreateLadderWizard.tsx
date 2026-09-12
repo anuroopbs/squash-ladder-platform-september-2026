@@ -27,6 +27,13 @@ const toggleClass = (active: boolean) =>
   `rounded-lg px-3 py-1.5 text-sm font-medium transition ${
     active ? "bg-court-500 text-white" : "bg-white/[0.04] text-white/60 hover:text-white"
   }`;
+// Native <select> dropdown popups are rendered by the browser/OS, not by our
+// page CSS — the closed box picks up our dark styling fine, but individual
+// <option> rows fall back to the browser's own default (usually a white
+// popup) unless we give them an explicit background too. Without this, the
+// white text color inherited from the page becomes invisible white-on-white,
+// except on the one row the browser happens to highlight on hover.
+const optionClass = "bg-[#0b0f0d] text-white";
 
 export function CreateLadderWizard() {
   const searchParams = useSearchParams();
@@ -346,9 +353,11 @@ export function CreateLadderWizard() {
                 onChange={(e) => setSelectedCityId(e.target.value)}
                 className={inputClass}
               >
-                <option value="">Choose a city…</option>
+                <option value="" className={optionClass}>
+                  Choose a city…
+                </option>
                 {cities.map((c) => (
-                  <option key={c.id} value={c.id}>
+                  <option key={c.id} value={c.id} className={optionClass}>
                     {c.name}, {c.country}
                   </option>
                 ))}
@@ -405,9 +414,11 @@ export function CreateLadderWizard() {
                 onChange={(e) => setSelectedClubId(e.target.value)}
                 className={inputClass}
               >
-                <option value="">Choose a club…</option>
+                <option value="" className={optionClass}>
+                  Choose a club…
+                </option>
                 {clubs.map((c) => (
-                  <option key={c.id} value={c.id}>
+                  <option key={c.id} value={c.id} className={optionClass}>
                     {c.name}
                   </option>
                 ))}
@@ -489,7 +500,7 @@ export function CreateLadderWizard() {
             className={inputClass}
           >
             {SPORTS.map((s) => (
-              <option key={s.value} value={s.value}>
+              <option key={s.value} value={s.value} className={optionClass}>
                 {s.label}
               </option>
             ))}
