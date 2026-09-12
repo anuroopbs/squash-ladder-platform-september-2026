@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCurrentPlayer } from "@/lib/queries/profile";
 import { SignOutButton } from "@/components/auth/SignOutButton";
+import { PendingActionsBadge } from "@/components/layout/PendingActionsBadge";
 
 export async function SiteHeader() {
   const player = await getCurrentPlayer();
@@ -13,6 +14,7 @@ export async function SiteHeader() {
 
       {player ? (
         <div className="flex items-center gap-4">
+          <PendingActionsBadge userId={player.user.id} />
           <span className="text-sm text-white/70">
             {player.profile?.display_name ?? player.user.email}
           </span>
