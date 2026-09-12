@@ -3,18 +3,35 @@
 A global, multi-tenant ladder platform: **City → Club → Ladder → Players/Matches**.
 Built with Next.js 14 (App Router), Tailwind CSS, and Supabase.
 
-## What's here (v1 — read-only drill-down)
+Live at: https://squash-ladder-platform-september-20.vercel.app
+
+## What's here
 
 - `/` — the Global Explorer: search + a visual card grid of every city on the
   platform, pulling live data from Supabase.
-- `/[citySlug]` — a City page listing that city's clubs as cards.
-- `/[citySlug]/[clubSlug]` — a Club Hub stub (ladder rankings/challenges/score
-  reporting are the next build step — see `architecture/city-club-ladder-schema-and-ux.md`
-  in the Claude Project for the full plan).
+- `/[citySlug]` — a City page listing that city's clubs as cards, with an
+  "+ Add a club" link.
+- `/[citySlug]/[clubSlug]` — the Club Hub: real ladder standings, a
+  join-ladder banner (and leave-ladder option once you're a member),
+  and the challenge/report-score UI.
+- `/create` — a 3-step wizard (City → Club → Ladder) for adding a new
+  city/club/ladder that isn't on the platform yet.
+- `/login`, `/register` — simple email/password auth via `@supabase/ssr`,
+  with `?next=` redirect support so joining from a specific club page
+  brings you back to that same page afterward.
 
-This matches "build order" step 1 in the architecture doc: ship the
-City → Club drill-down against real data first, before auth and the
-creation wizard.
+## Features shipped
+
+- **Auth** — email/password sign-up and sign-in.
+- **Ladder creation** — anyone signed in can add a city, club, and ladder
+  from `/create`.
+- **Join / leave a ladder** — join at the next open rank, or leave at any
+  time from the Club Hub.
+- **Challenges & score reporting** — challenge another player on your
+  ladder, accept/decline, report a score, and confirm/dispute it.
+- **Automatic rank movement** — confirming a match where the lower-ranked
+  player won automatically re-shuffles ranks between the two players, via
+  a Postgres trigger (see `sql/schema.sql`).
 
 ## Getting started
 
@@ -23,60 +40,19 @@ npm install
 npm run dev
 ```
 
-Then open http://localhost:3000.
+Copy `.env.example` to `.env.local` and fill in your Supabase project URL
+and publishable (anon) key.
 
-`.env.local` is already filled in with the live Supabase project's URL and
-publishable (anon) key — no setup needed there. If you ever need to point
-this at a different Supabase project, copy `.env.example` to `.env.local`
-and fill in your own values.
+## Database
 
-## Project structure
-
-```
-app/
-  page.tsx                       Global Explorer (city search + cards)
-  [citySlug]/page.tsx            City page (club cards)
-  [citySlug]/[clubSlug]/page.tsx Club Hub (stub — ladder table comes next)
-  not-found.tsx
-  layout.tsx, globals.css
-
-components/
-  explorer/                      GlobalExplorer, CitySearchBar, CityCardGrid, CityCard
-  location/                      Breadcrumbs, ClubCardGrid, ClubCard
-  ui/                             Badge, EmptyState
-
-lib/
-  supabase/client.ts             Browser Supabase client
-  supabase/server.ts             Server Component Supabase client
-  queries/cities.ts, clubs.ts    Data-fetching functions (Server Components call these directly)
-  types/database.ts              Hand-written types mirroring sql/schema.sql
-  slugify.ts
-
-sql/
-  schema.sql                     Full Postgres schema (tables, RLS, the
-                                  ladder_standings view) — already applied
-                                  to the live Supabase project.
-```
-
-## Data flow
-
-Server Components (`app/**/page.tsx`) call the functions in `lib/queries/*`
-directly against the Supabase **server** client — no client-side loading
-spinner on first paint. Anything interactive (the search box) is a small
-leaf Client Component (`GlobalExplorer.tsx`) that receives server-fetched
-data as props and filters it client-side.
+The full schema, RLS policies, and the rank-movement trigger live in
+`sql/schema.sql`. Run it against a fresh Supabase project's SQL editor to
+set everything up (tables, RLS, grants, and the `ladder_standings` view).
 
 ## Next steps
 
-1. Seed more cities/clubs (a few are already in via the SQL editor — see the
-   Claude Project's `architecture/infra-notes.md` for the live project
-   details).
-2. Add auth (`/login`, `/register`) and the `CreateLadderWizard` so the
-   "add my city/club" flow in the Explorer actually works.
-3. Build the Club Hub for real: `LadderTable`, `ChallengeModal`,
-   `ReportScoreModal`, `RecentMatchesFeed` — this replaces the stub in
-   `app/[citySlug]/[clubSlug]/page.tsx`.
-4. `/profile` — a signed-in player's dashboard across every ladder they're in.
-
-Full architecture reasoning lives in the Claude Project for this app
-("Squash WebSITE") under `architecture/city-club-ladder-schema-and-ux.md`.
+- Review production email-confirmation settings before pointing real users
+  at this (currently off, fine for friends/family testing).
+- Set up a custom domain once you're happy with where the product is.
+- Audit Delhi and Dublin's club listings against real-world sources (the
+  same pass already done for Hyderabad and Secunderabad).
