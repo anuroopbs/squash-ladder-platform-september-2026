@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
@@ -10,6 +10,8 @@ const inputClasses =
 
 export function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") || "/";
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,7 +48,7 @@ export function RegisterForm() {
     // session yet. If it's disabled (current project setting), a session
     // comes back immediately and the player is signed in right away.
     if (data.session) {
-      router.push("/");
+      router.push(next);
       router.refresh();
     } else {
       setNeedsConfirmation(true);
