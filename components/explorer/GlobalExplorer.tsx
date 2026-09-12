@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import type { CityWithClubCount } from "@/lib/types/database";
 import { CitySearchBar } from "./CitySearchBar";
 import { CityCardGrid } from "./CityCardGrid";
@@ -42,13 +43,13 @@ export function GlobalExplorer({ cities }: { cities: CityWithClubCount[] }) {
       </div>
 
       <div className="mt-10 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
-        <p className="text-sm text-white/50">
-          Don&apos;t see your city or club?{" "}
-          <span className="font-medium text-white/80">
-            Ladder creation is coming very soon
-          </span>{" "}
-          — you&apos;ll be able to add it and start a fresh ladder in seconds.
-        </p>
+        <p className="text-sm text-white/50">Don&apos;t see your city or club?</p>
+        <Link
+          href="/create"
+          className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-court-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-court-400"
+        >
+          Add it and start a ladder →
+        </Link>
       </div>
     </div>
   );
