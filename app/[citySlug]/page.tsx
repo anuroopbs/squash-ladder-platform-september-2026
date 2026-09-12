@@ -4,6 +4,7 @@ import { getCityBySlug } from "@/lib/queries/cities";
 import { getClubsByCitySlug } from "@/lib/queries/clubs";
 import { Breadcrumbs } from "@/components/location/Breadcrumbs";
 import { ClubCardGrid } from "@/components/location/ClubCardGrid";
+import { EditEntityButton } from "@/components/shared/EditEntityButton";
 
 export const revalidate = 60;
 
@@ -32,12 +33,20 @@ export default async function CityPage({
               : `${clubs.length} ${clubs.length === 1 ? "club" : "clubs"} on the ladder`}
           </p>
         </div>
-        <Link
-          href={`/create?city=${encodeURIComponent(city.slug)}`}
-          className="shrink-0 rounded-xl border border-white/15 px-4 py-2 text-sm font-medium text-white/70 transition hover:border-court-400/40 hover:text-white"
-        >
-          + Add a club
-        </Link>
+        <div className="flex shrink-0 items-start gap-2">
+          <EditEntityButton
+            table="cities"
+            id={city.id}
+            createdBy={city.created_by}
+            fields={[{ key: "name", label: "City name", value: city.name }]}
+          />
+          <Link
+            href={`/create?city=${encodeURIComponent(city.slug)}`}
+            className="shrink-0 rounded-xl border border-white/15 px-4 py-2 text-sm font-medium text-white/70 transition hover:border-court-400/40 hover:text-white"
+          >
+            + Add a club
+          </Link>
+        </div>
       </div>
 
       <div className="mt-8">
