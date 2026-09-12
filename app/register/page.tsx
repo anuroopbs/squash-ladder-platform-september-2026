@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { RegisterForm } from "@/components/auth/RegisterForm";
 
@@ -13,7 +14,9 @@ export default function RegisterPage() {
       subtitle="Create an account to join a club's ladder, challenge players, and track your rank."
       footer={<>Free to join. No credit card, ever.</>}
     >
-      <RegisterForm />
+      <Suspense fallback={null}>
+        <RegisterForm />
+      </Suspense>
     </AuthCard>
   );
 }
