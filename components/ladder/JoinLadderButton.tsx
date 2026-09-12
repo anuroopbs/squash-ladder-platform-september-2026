@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-type Status = "checking" | "signed-out" | "not-joined" | "joining" | "joined";
+type Status = "checking" | "signed-out" | "not-joined" | "joining" | "joined" | "leaving";
 
 export function JoinLadderButton({
   ladderId,
@@ -19,6 +19,8 @@ export function JoinLadderButton({
   const router = useRouter();
   const [status, setStatus] = useState<Status>("checking");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [confirmingLeave, setConfirmingLeave] = useState(false);
 
   const nextPath = citySlug && clubSlug ? `/${citySlug}/${clubSlug}` : "/";
 
@@ -33,6 +35,8 @@ export function JoinLadderButton({
         if (!cancelled) setStatus("signed-out");
         return;
       }
+
+      if (!cancelled) setCurrentUserId(user.id);
 
       const { data } = await supabase
         .from("ladder_players")
@@ -86,6 +90,29 @@ export function JoinLadderButton({
     router.refresh();
   }
 
+  async function handleLeave() {
+    if (!currentUserId) return;
+    setStatus("leaving");
+    setErrorMessage(null);
+
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("ladder_players")
+      .delete()
+      .eq("ladder_id", ladderId)
+      .eq("player_id", currentUserId);
+
+    if (error) {
+      setErrorMessage(error.message);
+      setStatus("joined");
+      return;
+    }
+
+    setConfirmingLeave(false);
+    setStatus("not-joined");
+    router.refresh();
+  }
+
   if (status === "checking") {
     return null;
   }
@@ -128,11 +155,55 @@ export function JoinLadderButton({
     );
   }
 
-  if (status === "joined") {
+  if (status === "joined" || status === "leaving") {
     return h(
       "div",
-      { className: "mb-6 rounded-xl border border-court-500/30 bg-court-500/10 px-5 py-4 text-sm text-court-300" },
-      "You're on this ladder. Refresh to see your current rank."
+      {
+        className:
+          "mb-6 flex flex-col gap-3 rounded-xl border border-court-500/30 bg-court-500/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between",
+      },
+      h(
+        "p",
+        { className: "text-sm text-court-300" },
+        "You're on this ladder. Refresh to see your current rank."
+      ),
+      confirmingLeave
+        ? h(
+            "div",
+            { className: "flex shrink-0 items-center gap-2" },
+            h(
+              "span",
+              { className: "text-sm text-white/60" },
+              "Leave this ladder?"
+            ),
+            h(
+              "button",
+              {
+                onClick: handleLeave,
+                disabled: status === "leaving",
+                className:
+                  "rounded-lg bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-300 transition hover:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-60",
+              },
+              status === "leaving" ? "Leaving…" : "Yes, leave"
+            ),
+            h(
+              "button",
+              {
+                onClick: () => setConfirmingLeave(false),
+                className: "text-sm text-white/50 transition hover:text-white",
+              },
+              "Cancel"
+            )
+          )
+        : h(
+            "button",
+            {
+              onClick: () => setConfirmingLeave(true),
+              className: "shrink-0 text-sm text-white/50 underline-offset-2 transition hover:text-white hover:underline",
+            },
+            "Leave ladder"
+          ),
+      errorMessage && h("p", { className: "text-sm text-red-300" }, errorMessage)
     );
   }
 
