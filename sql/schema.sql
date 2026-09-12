@@ -124,7 +124,13 @@ create index if not exists ladders_club_id_idx on public.ladders (club_id);
 
 -- ----------------------------------------------------------------------------
 -- ladder_players: junction table — a player can be in many ladders across
--- clubs/cities; rank is maintained here per ladder
+-- clubs/cities; rank is maintained here per ladder.
+--
+-- The (ladder_id, rank) constraint is declared deferrable and checked at
+-- transaction end (not immediately) because the rank-movement trigger below
+-- shifts several rows' ranks in one transaction — with an immediate unique
+-- check, two rows can briefly both want the same rank number mid-shift and
+-- Postgres would (wrongly) reject that as a violation.
 -- ----------------------------------------------------------------------------
 create table if not exists public.ladder_players (
   id uuid primary key default gen_random_uuid(),
@@ -133,7 +139,8 @@ create table if not exists public.ladder_players (
   rank integer not null,
   joined_at timestamptz not null default now(),
   unique (ladder_id, player_id),
-  unique (ladder_id, rank)
+  constraint ladder_players_ladder_id_rank_key
+    unique (ladder_id, rank) deferrable initially deferred
 );
 
 create index if not exists ladder_players_ladder_id_idx on public.ladder_players (ladder_id);
@@ -192,6 +199,66 @@ create trigger matches_set_updated_at
 create index if not exists matches_ladder_id_idx on public.matches (ladder_id);
 create index if not exists matches_player1_id_idx on public.matches (player1_id);
 create index if not exists matches_player2_id_idx on public.matches (player2_id);
+
+-- ----------------------------------------------------------------------------
+-- Automatic rank movement on match confirmation.
+--
+-- Classic challenge-ladder algorithm: when a match's status changes to
+-- 'confirmed', if the winner was ranked worse (a higher rank number) than
+-- the loser, the winner takes the loser's old rank, and everyone who was
+-- strictly between the two old ranks shifts down (worse) by exactly one.
+-- If the higher-ranked player defended (won), nothing changes.
+--
+-- This needs a privilege escalation beyond what RLS grants a normal player
+-- (the "admins can update ladder players" policy below only lets admins
+-- change rank directly), so it runs as `security definer` — the same
+-- pattern already used by handle_new_user() above — rather than a
+-- service-role API route. No application code changes are needed for this;
+-- the existing client-side confirm/dispute call in ChallengeHub already
+-- triggers it purely by updating matches.status.
+--
+-- The `matches` table has no loser_id column, only player1_id/player2_id/
+-- winner_id, so the loser is derived as "whichever of the two isn't the
+-- winner" rather than read directly.
+-- ----------------------------------------------------------------------------
+create or replace function public.handle_match_confirmed()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  winner_rank int;
+  loser_rank int;
+  computed_loser_id uuid;
+begin
+  if new.status = 'confirmed' and old.status is distinct from 'confirmed' then
+    computed_loser_id := case
+      when new.winner_id = new.player1_id then new.player2_id
+      else new.player1_id
+    end;
+
+    select rank into winner_rank from public.ladder_players
+      where ladder_id = new.ladder_id and player_id = new.winner_id;
+    select rank into loser_rank from public.ladder_players
+      where ladder_id = new.ladder_id and player_id = computed_loser_id;
+
+    if winner_rank is not null and loser_rank is not null and winner_rank > loser_rank then
+      update public.ladder_players set rank = rank + 1
+        where ladder_id = new.ladder_id and rank >= loser_rank and rank < winner_rank;
+      update public.ladder_players set rank = loser_rank
+        where ladder_id = new.ladder_id and player_id = new.winner_id;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_match_confirmed on public.matches;
+create trigger on_match_confirmed
+  after update on public.matches
+  for each row
+  execute function public.handle_match_confirmed();
 
 -- ============================================================================
 -- Row Level Security
@@ -271,9 +338,9 @@ create policy "admins can delete ladders"
   using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin));
 
 -- ladder_players: publicly readable (standings); a user can join a ladder
--- (insert their own row); only admins can change rank directly (ranks move
--- automatically via match confirmation logic, handled in application code
--- or a future trigger); a user can remove themselves.
+-- (insert their own row); rank changes normally happen automatically via
+-- the on_match_confirmed trigger above, but admins can also update rank
+-- directly (e.g. to fix a mistake); a user can remove themselves.
 create policy "ladder players are publicly readable"
   on public.ladder_players for select
   using (true);
