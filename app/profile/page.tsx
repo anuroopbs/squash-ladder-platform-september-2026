@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentPlayer } from "@/lib/queries/profile";
 import { getLaddersForPlayer } from "@/lib/queries/playerLadders";
+import { PhoneNumberEditor } from "@/components/profile/PhoneNumberEditor";
 
 export const revalidate = 0;
 
@@ -17,6 +18,8 @@ export default async function ProfilePage() {
         {player.profile?.display_name ?? player.user.email}
       </h1>
       <p className="mt-2 text-white/50">{player.user.email}</p>
+
+      <PhoneNumberEditor userId={player.user.id} />
 
       <div className="mt-10">
         <h2 className="text-sm font-semibold text-white">Your ladders</h2>
