@@ -4,6 +4,7 @@ import { useEffect, useState, createElement as h } from "react";
 import type { LadderStanding } from "@/lib/queries/ladders";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { createClient } from "@/lib/supabase/client";
+import { getLadderMatePhones } from "@/lib/queries/contacts";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 
@@ -19,13 +20,16 @@ export function LadderTable({
   standings: LadderStanding[];
 }) {
   const [membership, setMembership] = useState<MembershipStatus>("checking");
+  const [phones, setPhones] = useState<Record<string, string>>({});
 
   useEffect(() => {
     let cancelled = false;
 
     async function check() {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       if (!user) {
         if (!cancelled) setMembership("signed-out");
@@ -41,6 +45,28 @@ export function LadderTable({
       cancelled = true;
     };
   }, [ladderId, standings]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPhones() {
+      if (standings.length === 0) return;
+      try {
+        const result = await getLadderMatePhones(
+          standings.map((s) => s.player_id)
+        );
+        if (!cancelled) setPhones(result);
+      } catch {
+        // Phone numbers are a nice-to-have on top of the standings; fail
+        // silently rather than breaking the ladder view over this.
+      }
+    }
+
+    loadPhones();
+    return () => {
+      cancelled = true;
+    };
+  }, [standings]);
 
   if (standings.length === 0) {
     return h(EmptyState, {
@@ -79,7 +105,21 @@ export function LadderTable({
             { className: "w-8 shrink-0 text-center text-sm font-semibold text-white/50" },
             MEDALS[player.rank - 1] ?? `#${player.rank}`
           ),
-          h("span", { className: "flex-1 text-sm font-medium text-white" }, player.display_name)
+          h(
+            "span",
+            { className: "flex-1 text-sm font-medium text-white" },
+            player.display_name
+          ),
+          phones[player.player_id]
+            ? h(
+                "a",
+                {
+                  href: `tel:${phones[player.player_id]}`,
+                  className: "shrink-0 text-xs font-medium text-court-300 hover:text-court-200",
+                },
+                phones[player.player_id]
+              )
+            : null
         )
       ),
       showGhostRow &&
