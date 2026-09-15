@@ -1,6 +1,8 @@
 import { getCities } from "@/lib/queries/cities";
 import { GlobalExplorer } from "@/components/explorer/GlobalExplorer";
 import { LadderSidebar } from "@/components/home/LadderSidebar";
+import { HowItWorks } from "@/components/home/HowItWorks";
+import { VisionSection } from "@/components/home/VisionSection";
 import { createClient } from "@/lib/supabase/server";
 
 export const revalidate = 60;
@@ -16,8 +18,6 @@ interface LadderPreview {
 
 async function getLadderPreviews(): Promise<LadderPreview[]> {
   const supabase = createClient();
-
-  // Get all ladder standings enriched with city/club info
   const { data: standings } = await supabase
     .from("ladder_standings")
     .select("*")
@@ -25,9 +25,7 @@ async function getLadderPreviews(): Promise<LadderPreview[]> {
 
   if (!standings) return [];
 
-  // Group by ladder and take top 5 per ladder
   const ladderMap = new Map<string, LadderPreview>();
-
   for (const row of standings) {
     const key = `${row.club_slug}-${row.ladder_name}`;
     if (!ladderMap.has(key)) {
@@ -45,7 +43,6 @@ async function getLadderPreviews(): Promise<LadderPreview[]> {
       preview.players.push({ rank: row.rank, name: row.display_name });
     }
   }
-
   return Array.from(ladderMap.values());
 }
 
@@ -63,7 +60,7 @@ export default async function HomePage() {
         <h1 className="mt-5 text-4xl font-bold tracking-tight text-white sm:text-5xl">
           Find your local ladder.
         </h1>
-        <p className="mt-4 text-balance text-lg text-white/55">
+        <p className="mt-4 max-w-2xl mx-auto text-balance text-lg text-white/55">
           Pick your city, pick your club, and see where you rank. Challenge
           players, report scores, and climb — wherever in the world you play.
         </p>
@@ -71,21 +68,31 @@ export default async function HomePage() {
 
       {/* Main Content: Explorer + Ladder Sidebar */}
       <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]">
-        {/* Left: City Explorer */}
         <div>
           <GlobalExplorer cities={cities} />
         </div>
-
-        {/* Right: Ladder Rankings */}
         <div className="hidden lg:block">
           <LadderSidebar previews={ladderPreviews} />
         </div>
       </div>
 
-      {/* Mobile: Ladder Rankings (below explorer) */}
+      {/* Mobile Ladder Rankings */}
       <div className="mt-8 lg:hidden">
         <LadderSidebar previews={ladderPreviews} />
       </div>
+
+      {/* How It Works */}
+      <HowItWorks />
+
+      {/* Vision */}
+      <VisionSection />
+
+      {/* Footer */}
+      <footer className="mt-16 border-t border-white/10 pt-8 text-center">
+        <p className="text-sm text-white/40">
+          Built with ❤️ for the squash community. Play fair, climb high, make friends.
+        </p>
+      </footer>
     </div>
   );
 }

@@ -21,7 +21,6 @@ WHERE id IN (
 );
 
 -- Step 2: For other cities, delete all but one fake player per ladder
--- (keep the one with the lowest rank to minimize disruption)
 DELETE FROM public.ladder_players
 WHERE id IN (
   SELECT lp.id
@@ -33,7 +32,6 @@ WHERE id IN (
   WHERE ci.slug != 'hyderabad'
     AND p.display_name IN ('Test Player', 'Live Deploy Test', 'Test Partner E2E', 'Rank Test A', 'Rank Test B', 'Robert')
     AND lp.id NOT IN (
-      -- Keep only the lowest-ranked fake player per ladder
       SELECT DISTINCT ON (lp2.ladder_id) lp2.id
       FROM public.ladder_players lp2
       JOIN public.ladders l2 ON l2.id = lp2.ladder_id
@@ -46,21 +44,17 @@ WHERE id IN (
     )
 );
 
--- Step 3: Delete orphaned fake profiles (not in any ladder)
+-- Step 3: Delete orphaned fake profiles
 DELETE FROM public.profiles
 WHERE display_name IN ('Test Player', 'Live Deploy Test', 'Test Partner E2E', 'Rank Test A', 'Rank Test B', 'Robert')
   AND id NOT IN (SELECT player_id FROM public.ladder_players);
 
--- Step 4: Re-rank ALL ladders to close any gaps
-WITH all_ladders AS (
-  SELECT DISTINCT ladder_id FROM public.ladder_players
-),
-re_ranked AS (
+-- Step 4: Re-rank ALL ladders
+WITH re_ranked AS (
   SELECT
-    lp.id,
-    lp.ladder_id,
-    ROW_NUMBER() OVER (PARTITION BY lp.ladder_id ORDER BY lp.rank) as new_rank
-  FROM public.ladder_players lp
+    id,
+    ROW_NUMBER() OVER (PARTITION BY ladder_id ORDER BY rank) as new_rank
+  FROM public.ladder_players
 )
 UPDATE public.ladder_players
 SET rank = re_ranked.new_rank
@@ -68,13 +62,8 @@ FROM re_ranked
 WHERE public.ladder_players.id = re_ranked.id
   AND public.ladder_players.rank != re_ranked.new_rank;
 
--- Step 5: Verify final state
-SELECT
-  ci.slug as city,
-  c.name as club,
-  l.name as ladder,
-  p.display_name as player,
-  lp.rank
+-- Step 5: Verify
+SELECT ci.slug as city, c.name as club, l.name as ladder, p.display_name as player, lp.rank
 FROM public.ladder_players lp
 JOIN public.ladders l ON l.id = lp.ladder_id
 JOIN public.clubs c ON c.id = l.club_id
