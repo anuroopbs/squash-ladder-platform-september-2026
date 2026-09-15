@@ -1,5 +1,3 @@
-"use client";
-
 import { forwardRef } from "react";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -9,16 +7,16 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants = {
-  primary: "bg-court-500 text-white hover:bg-court-400",
-  secondary: "bg-white/10 text-white hover:bg-white/15 border border-white/10",
-  ghost: "text-white/70 hover:text-white hover:bg-white/5",
-  danger: "bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/30",
+  primary: "bg-court-500 text-white hover:bg-court-400 active:bg-court-600",
+  secondary: "bg-white/10 text-white hover:bg-white/15 active:bg-white/20 border border-white/10",
+  ghost: "text-white/70 hover:text-white hover:bg-white/5 active:bg-white/10",
+  danger: "bg-red-500/20 text-red-300 hover:bg-red-500/30 active:bg-red-500/40 border border-red-500/30",
 };
 
 const sizes = {
-  sm: "px-3 py-1.5 text-sm",
-  md: "px-4 py-2.5 text-sm",
-  lg: "px-6 py-3 text-base",
+  sm: "px-3 py-2 text-sm min-h-[40px]",
+  md: "px-4 py-2.5 text-sm min-h-[44px]",
+  lg: "px-6 py-3 text-base min-h-[48px]",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(

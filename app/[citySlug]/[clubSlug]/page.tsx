@@ -9,14 +9,17 @@ import { Breadcrumbs } from "@/components/location/Breadcrumbs";
 import { LadderTable } from "@/components/ladder/LadderTable";
 import { ChallengesList } from "@/components/ladder/ChallengesList";
 import { MatchHistory } from "@/components/ladder/MatchHistory";
+import { JoinLadderButton } from "@/components/ladder/JoinLadderButton";
 import { Button } from "@/components/ui/Button";
 
 export const revalidate = 60;
 
 export default async function ClubHubPage({
   params,
+  searchParams,
 }: {
   params: { citySlug: string; clubSlug: string };
+  searchParams: { join?: string };
 }) {
   const club = await getClubWithCity(params.citySlug, params.clubSlug);
   if (!club) notFound();
@@ -71,6 +74,9 @@ export default async function ClubHubPage({
         c.challenged_id === currentPlayer?.user?.id)
   );
 
+  // Handle join=true from home page
+  const showJoinPrompt = searchParams.join === "true";
+
   return (
     <main className="mx-auto max-w-4xl px-6 py-12 sm:py-16">
       {/* Breadcrumbs */}
@@ -91,6 +97,41 @@ export default async function ClubHubPage({
           <p className="max-w-md text-right text-sm text-white/60">{club.description}</p>
         )}
       </div>
+
+      {/* Join prompt from home page */}
+      {showJoinPrompt && !playerLadderInfo && currentPlayer?.user && (
+        <div className="mt-6 rounded-2xl border border-court-400/20 bg-court-500/5 p-5">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="font-semibold text-court-300">Ready to join?</h2>
+              <p className="mt-1 text-sm text-white/60">
+                You&apos;re one click away from joining this ladder.
+              </p>
+            </div>
+            <JoinLadderButton ladderId={primaryLadder.id} onJoined={async () => {}} />
+          </div>
+        </div>
+      )}
+
+      {/* Not logged in but tried to join */}
+      {showJoinPrompt && !currentPlayer?.user && (
+        <div className="mt-6 rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-5">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="font-semibold text-yellow-300">Sign in to join</h2>
+              <p className="mt-1 text-sm text-white/60">
+                You need to be logged in to join this ladder.
+              </p>
+            </div>
+            <a
+              href={`/login?returnTo=/${params.citySlug}/${params.clubSlug}?join=true`}
+              className="rounded-xl bg-court-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-court-400"
+            >
+              Sign In
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* ============================================ */}
       {/* ACTIVITY SECTION — AT THE TOP OF THE PAGE    */}

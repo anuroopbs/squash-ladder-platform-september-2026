@@ -57,7 +57,7 @@ export function LadderTable({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-white">Ladder Rankings</h2>
@@ -68,9 +68,9 @@ export function LadderTable({
         </div>
       </div>
 
-      {/* Standings Table */}
+      {/* Standings */}
       {standings.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-10 text-center">
+        <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-8 text-center">
           <p className="text-white/50">No players on this ladder yet. Be the first to join!</p>
         </div>
       ) : (
@@ -88,45 +88,48 @@ export function LadderTable({
             return (
               <div
                 key={player.player_id}
-                className={`flex items-center gap-4 rounded-xl border p-4 transition ${
+                className={`rounded-xl border p-4 transition ${
                   player.player_id === currentPlayerId
                     ? "border-court-400/30 bg-court-500/10"
                     : "border-white/10 bg-white/[0.03] hover:border-white/20"
                 }`}
               >
-                {/* Rank */}
-                <div className="w-16 text-center text-lg font-bold text-white/80">
-                  {getRankBadge(player.rank)}
-                </div>
-
-                {/* Player Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-white truncate">{player.display_name}</span>
-                    {player.player_id === currentPlayerId && (
-                      <span className="shrink-0 rounded bg-court-500/20 px-1.5 py-0.5 text-xs text-court-300">
-                        You
-                      </span>
-                    )}
-                    {hasActiveChallenge && (
-                      <span className="shrink-0 rounded bg-yellow-500/20 px-1.5 py-0.5 text-xs text-yellow-300">
-                        In Challenge
-                      </span>
-                    )}
+                {/* Mobile: stacked layout */}
+                <div className="flex items-center gap-3">
+                  <div className="w-12 text-center text-lg font-bold text-white/80 shrink-0">
+                    {getRankBadge(player.rank)}
                   </div>
-                  <p className="text-xs text-white/40">
-                    Joined {new Date(player.joined_at).toLocaleDateString()}
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-white truncate">
+                        {player.display_name}
+                      </span>
+                      {player.player_id === currentPlayerId && (
+                        <span className="shrink-0 rounded bg-court-500/20 px-1.5 py-0.5 text-xs text-court-300">
+                          You
+                        </span>
+                      )}
+                      {hasActiveChallenge && (
+                        <span className="shrink-0 rounded bg-yellow-500/20 px-1.5 py-0.5 text-xs text-yellow-300">
+                          In Challenge
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-white/40 mt-0.5">
+                      Joined {new Date(player.joined_at).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
 
-                {/* Actions */}
+                {/* Actions - mobile friendly */}
                 {currentPlayerId && player.player_id !== currentPlayerId && (
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="mt-3 flex items-center gap-2 flex-wrap">
                     {canChallenge && (
                       <Button
                         size="sm"
                         variant="secondary"
                         onClick={() => handleChallenge(player)}
+                        className="flex-1 sm:flex-initial"
                       >
                         Challenge
                       </Button>
@@ -136,6 +139,7 @@ export function LadderTable({
                         size="sm"
                         variant="ghost"
                         onClick={() => handleReportScore(player)}
+                        className="flex-1 sm:flex-initial"
                       >
                         Report Score
                       </Button>
