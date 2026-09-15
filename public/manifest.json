@@ -1,0 +1,26 @@
+{
+  "name": "Ladder — Find Your Local Racket Sports Ladder",
+  "short_name": "Ladder",
+  "description": "Find your city, find your club, join the ladder. Squash, padel, and racquetball ladders for players everywhere.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0f0d",
+  "theme_color": "#0b0f0d",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["sports", "lifestyle", "social"],
+  "prefer_related_applications": false
+}
