@@ -58,7 +58,7 @@ export default async function HomePage() {
   const ladders = await getAllLadders();
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
+    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 pb-24 sm:pb-16">
       {/* Hero Section */}
       <div className="text-center">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/60">
