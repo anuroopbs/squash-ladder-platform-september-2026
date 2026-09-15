@@ -13,9 +13,12 @@ export async function SiteHeader() {
 
       {player ? (
         <div className="flex items-center gap-4">
-          <span className="text-sm text-white/70">
+          <Link
+            href="/profile"
+            className="text-sm text-white/60 transition hover:text-white"
+          >
             {player.profile?.display_name ?? player.user.email}
-          </span>
+          </Link>
           <SignOutButton />
         </div>
       ) : (

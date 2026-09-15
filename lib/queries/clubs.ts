@@ -12,7 +12,7 @@ export async function getClubsByCitySlug(
     .order("name");
 
   if (error) throw error;
-  return (data ?? []) as unknown as ClubWithLadderCount[];
+  return (data ?? []) as ClubWithLadderCount[];
 }
 
 export async function getClubBySlug(citySlug: string, clubSlug: string) {

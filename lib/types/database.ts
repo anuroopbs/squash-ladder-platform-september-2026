@@ -1,6 +1,5 @@
-// Hand-written types mirroring sql/schema.sql.
-// Once the Supabase CLI is set up locally, replace this with the generated
-// version: `supabase gen types typescript --project-id wektzyvprwhzdqizbgih`
+// Proper TypeScript types for the Ladder Platform
+// These mirror sql/schema.sql exactly — no `as any` needed
 
 export type LadderSport = "squash" | "padel" | "racquetball" | "other";
 export type ChallengeStatus =
@@ -10,6 +9,10 @@ export type ChallengeStatus =
   | "expired"
   | "completed";
 export type MatchStatus = "pending_confirmation" | "confirmed" | "disputed";
+
+// ============================================================================
+// Base table row types
+// ============================================================================
 
 export interface Profile {
   id: string;
@@ -91,12 +94,56 @@ export interface Match {
   updated_at: string;
 }
 
-// Convenience shapes used by the UI layer (joined query results)
+// ============================================================================
+// Joined / computed types for UI consumption
+// ============================================================================
 
+/** City with a count of its clubs (from the `*, clubs(count)` query) */
+export interface CityWithClubCount extends City {
+  clubs: { count: number }[];
+}
+
+/** Club with a count of its ladders (from the `*, ladders(count)` query) */
 export interface ClubWithLadderCount extends Club {
   ladders: { count: number }[];
 }
 
-export interface CityWithClubCount extends City {
-  clubs: { count: number }[];
+/** Club row joined with its parent city (for breadcrumbs) */
+export interface ClubWithCity extends Club {
+  cities: { slug: string; name: string };
+}
+
+/** A single row from the `ladder_standings` view */
+export interface LadderStandingRow {
+  ladder_id: string;
+  rank: number;
+  player_id: string;
+  display_name: string;
+  avatar_url: string | null;
+  is_admin: boolean;
+  joined_at: string;
+  ladder_name: string;
+  club_name: string;
+  club_slug: string;
+  city_name: string;
+  city_slug: string;
+}
+
+/** Challenge enriched with profile names for display */
+export interface ChallengeWithProfiles extends Challenge {
+  challenger_name: string;
+  challenged_name: string;
+}
+
+/** Match enriched with profile names and score for display */
+export interface MatchWithProfiles extends Match {
+  player1_name: string;
+  player2_name: string;
+  winner_name: string;
+}
+
+/** The currently signed-in player (auth user + their profile) */
+export interface CurrentPlayer {
+  user: { id: string; email: string | null };
+  profile: Profile | null;
 }

@@ -9,7 +9,8 @@ export async function getCities(): Promise<CityWithClubCount[]> {
     .order("name");
 
   if (error) throw error;
-  return (data ?? []) as unknown as CityWithClubCount[];
+  // The clubs(count) relation returns { count: number }[] — matches our type
+  return (data ?? []) as CityWithClubCount[];
 }
 
 export async function getCityBySlug(citySlug: string) {

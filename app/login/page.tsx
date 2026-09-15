@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
+import Link from "next/link";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { LoginForm } from "@/components/auth/LoginForm";
 
-export const metadata: Metadata = {
+export const metadata = {
   title: "Sign in — Ladder",
 };
 

@@ -3,10 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { createClient } from "@/lib/supabase/client";
-
-const inputClasses =
-  "w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-base text-white placeholder:text-white/35 outline-none transition focus:border-court-400/60 focus:bg-white/[0.06] focus:ring-2 focus:ring-court-400/20";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -22,34 +21,32 @@ export function RegisterForm() {
     setError(null);
     setLoading(true);
 
-    const supabase = createClient();
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { display_name: displayName },
-        emailRedirectTo:
-          typeof window !== "undefined"
-            ? `${window.location.origin}/auth/callback`
-            : undefined,
-      },
-    });
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { display_name: displayName },
+          emailRedirectTo:
+            typeof window !== "undefined"
+              ? `${window.location.origin}/auth/callback`
+              : undefined,
+        },
+      });
 
-    setLoading(false);
+      if (error) throw error;
 
-    if (error) {
-      setError(error.message);
-      return;
-    }
-
-    // If email confirmation is required, signUp returns a user but no
-    // session yet. If it's disabled (current project setting), a session
-    // comes back immediately and the player is signed in right away.
-    if (data.session) {
-      router.push("/");
-      router.refresh();
-    } else {
-      setNeedsConfirmation(true);
+      if (data.session) {
+        router.push("/");
+        router.refresh();
+      } else {
+        setNeedsConfirmation(true);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create account");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -70,71 +67,47 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label htmlFor="name" className="mb-1.5 block text-sm text-white/60">
-          Display name
-        </label>
-        <input
-          id="name"
-          type="text"
-          required
-          autoComplete="name"
-          value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
-          className={inputClasses}
-          placeholder="How you'll appear on the ladder"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="email" className="mb-1.5 block text-sm text-white/60">
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          required
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className={inputClasses}
-          placeholder="you@example.com"
-        />
-      </div>
-
-      <div>
-        <label
-          htmlFor="password"
-          className="mb-1.5 block text-sm text-white/60"
-        >
-          Password
-        </label>
-        <input
-          id="password"
-          type="password"
-          required
-          minLength={6}
-          autoComplete="new-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className={inputClasses}
-          placeholder="At least 6 characters"
-        />
-      </div>
+      <Input
+        id="name"
+        type="text"
+        required
+        autoComplete="name"
+        label="Display name"
+        placeholder="How you'll appear on the ladder"
+        value={displayName}
+        onChange={(e) => setDisplayName(e.target.value)}
+      />
+      <Input
+        id="email"
+        type="email"
+        required
+        autoComplete="email"
+        label="Email"
+        placeholder="you@example.com"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <Input
+        id="password"
+        type="password"
+        required
+        minLength={6}
+        autoComplete="new-password"
+        label="Password"
+        placeholder="At least 6 characters"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
 
       {error && (
-        <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300">
+        <div className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300">
           {error}
-        </p>
+        </div>
       )}
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-xl bg-court-500 py-3 text-sm font-semibold text-white transition hover:bg-court-400 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {loading ? "Creating account…" : "Create account"}
-      </button>
+      <Button type="submit" loading={loading} className="w-full">
+        Create account
+      </Button>
 
       <p className="text-center text-sm text-white/40">
         Already playing?{" "}
