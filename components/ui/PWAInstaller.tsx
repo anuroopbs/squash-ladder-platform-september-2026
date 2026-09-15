@@ -8,18 +8,22 @@ export function PWAInstaller() {
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
+    // Check if running as installed PWA
     const standalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       (window.navigator as any).standalone;
     setIsStandalone(standalone);
-
     if (standalone) return;
 
-    let promptEvent: any = null;
+    // Check if already captured by head script
+    const captured = (window as any).__pwaInstallPrompt;
+    if (captured) {
+      setInstallPrompt(captured);
+      setShowBanner(true);
+    }
 
     const handler = (e: any) => {
       e.preventDefault();
-      promptEvent = e;
       setInstallPrompt(e);
       setShowBanner(true);
     };
@@ -27,13 +31,13 @@ export function PWAInstaller() {
     window.addEventListener("beforeinstallprompt", handler);
     window.addEventListener("appinstalled", () => setIsStandalone(true));
 
-    // Show banner after a short delay (works even without beforeinstallprompt)
+    // Show banner if not dismissed
     const dismissed = sessionStorage.getItem("pwa-banner-dismissed");
     if (!dismissed) {
       const timer = setTimeout(() => setShowBanner(true), 1500);
       return () => {
-        window.removeEventListener("beforeinstallprompt", handler);
         clearTimeout(timer);
+        window.removeEventListener("beforeinstallprompt", handler);
       };
     }
 
