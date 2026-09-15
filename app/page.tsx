@@ -50,6 +50,9 @@ async function getAllLadders(): Promise<Ladder[]> {
     });
   }
 
+  // Sort by playerCount descending (most players first)
+  result.sort((a, b) => b.playerCount - a.playerCount);
+
   return result;
 }
 
@@ -73,13 +76,19 @@ export default async function HomePage() {
         </p>
       </div>
 
-      {/* City Explorer */}
-      <div className="mt-12">
-        <GlobalExplorer cities={cities} />
-      </div>
+      {/* Main Content: Explorer (left) + All Ladders (right) */}
+      <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_400px]">
+        {/* Left: City Explorer */}
+        <div>
+          <h2 className="text-lg font-semibold text-white mb-4">Explore Cities</h2>
+          <GlobalExplorer cities={cities} />
+        </div>
 
-      {/* All Ladders with search */}
-      <AllLadders ladders={ladders} />
+        {/* Right: All Ladders with search */}
+        <div className="lg:sticky lg:top-20 lg:self-start">
+          <AllLadders ladders={ladders} />
+        </div>
+      </div>
 
       {/* How It Works */}
       <HowItWorks />
