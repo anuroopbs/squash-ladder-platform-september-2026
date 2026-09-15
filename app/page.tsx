@@ -1,16 +1,62 @@
 import { getCities } from "@/lib/queries/cities";
 import { GlobalExplorer } from "@/components/explorer/GlobalExplorer";
+import { LadderSidebar } from "@/components/home/LadderSidebar";
+import { createClient } from "@/lib/supabase/server";
 
 export const revalidate = 60;
 
+interface LadderPreview {
+  citySlug: string;
+  cityName: string;
+  clubSlug: string;
+  clubName: string;
+  ladderName: string;
+  players: { rank: number; name: string }[];
+}
+
+async function getLadderPreviews(): Promise<LadderPreview[]> {
+  const supabase = createClient();
+
+  // Get all ladder standings enriched with city/club info
+  const { data: standings } = await supabase
+    .from("ladder_standings")
+    .select("*")
+    .order("rank");
+
+  if (!standings) return [];
+
+  // Group by ladder and take top 5 per ladder
+  const ladderMap = new Map<string, LadderPreview>();
+
+  for (const row of standings) {
+    const key = `${row.club_slug}-${row.ladder_name}`;
+    if (!ladderMap.has(key)) {
+      ladderMap.set(key, {
+        citySlug: row.city_slug,
+        cityName: row.city_name,
+        clubSlug: row.club_slug,
+        clubName: row.club_name,
+        ladderName: row.ladder_name,
+        players: [],
+      });
+    }
+    const preview = ladderMap.get(key)!;
+    if (preview.players.length < 5) {
+      preview.players.push({ rank: row.rank, name: row.display_name });
+    }
+  }
+
+  return Array.from(ladderMap.values());
+}
+
 export default async function HomePage() {
   const cities = await getCities();
+  const ladderPreviews = await getLadderPreviews();
 
   return (
-    <main className="relative mx-auto max-w-6xl px-6 py-16 sm:py-24">
-      <div className="bg-grid-fade pointer-events-none absolute inset-x-0 top-0 -z-10 h-[480px] [background-size:24px_24px]" />
-
-      <div className="mx-auto max-w-2xl text-center">
+    <div className="mx-auto max-w-7xl px-6 py-12 sm:py-16">
+      {/* Hero Section */}
+      <div className="text-center">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/60">
           🌍 Live in {cities.length} {cities.length === 1 ? "city" : "cities"}
         </span>
@@ -23,9 +69,23 @@ export default async function HomePage() {
         </p>
       </div>
 
-      <div className="mt-12">
-        <GlobalExplorer cities={cities} />
+      {/* Main Content: Explorer + Ladder Sidebar */}
+      <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]">
+        {/* Left: City Explorer */}
+        <div>
+          <GlobalExplorer cities={cities} />
+        </div>
+
+        {/* Right: Ladder Rankings */}
+        <div className="hidden lg:block">
+          <LadderSidebar previews={ladderPreviews} />
+        </div>
       </div>
-    </main>
+
+      {/* Mobile: Ladder Rankings (below explorer) */}
+      <div className="mt-8 lg:hidden">
+        <LadderSidebar previews={ladderPreviews} />
+      </div>
+    </div>
   );
 }

@@ -3,13 +3,13 @@ import { getClubWithCity } from "@/lib/queries/ladders";
 import { getLadderStandings } from "@/lib/queries/ladders";
 import { getChallengesByLadder } from "@/lib/queries/challenges";
 import { getMatchesByLadder } from "@/lib/queries/challenges";
-import { getLadderById } from "@/lib/queries/ladders";
 import { getCurrentPlayer } from "@/lib/queries/profile";
 import { getLadderPlayer } from "@/lib/queries/challenges";
 import { Breadcrumbs } from "@/components/location/Breadcrumbs";
 import { LadderTable } from "@/components/ladder/LadderTable";
 import { ChallengesList } from "@/components/ladder/ChallengesList";
 import { MatchHistory } from "@/components/ladder/MatchHistory";
+import { Button } from "@/components/ui/Button";
 
 export const revalidate = 60;
 
@@ -21,12 +21,11 @@ export default async function ClubHubPage({
   const club = await getClubWithCity(params.citySlug, params.clubSlug);
   if (!club) notFound();
 
-  // Get the primary ladder (first active one)
-  const ladders = await (await import("@/lib/queries/ladders"))
-    .getLaddersByClubSlug(params.citySlug, params.clubSlug);
-  
+  // Get ladders for this club
+  const { getLaddersByClubSlug } = await import("@/lib/queries/ladders");
+  const ladders = await getLaddersByClubSlug(params.citySlug, params.clubSlug);
+
   if (ladders.length === 0) {
-    // No ladder yet — show club info with a "coming soon" for ladder
     return (
       <main className="mx-auto max-w-4xl px-6 py-12 sm:py-16">
         <Breadcrumbs
@@ -60,39 +59,93 @@ export default async function ClubHubPage({
   const challenges = await getChallengesByLadder(primaryLadder.id);
   const matches = await getMatchesByLadder(primaryLadder.id, 10);
   const currentPlayer = await getCurrentPlayer();
-
-  // Check if current player is a member of this ladder
   const playerLadderInfo = currentPlayer?.user
     ? await getLadderPlayer(primaryLadder.id, currentPlayer.user.id)
     : null;
 
+  // Filter to only pending challenges for the current player
+  const myChallenges = challenges.filter(
+    (c) =>
+      c.status === "pending" &&
+      (c.challenger_id === currentPlayer?.user?.id ||
+        c.challenged_id === currentPlayer?.user?.id)
+  );
+
   return (
     <main className="mx-auto max-w-4xl px-6 py-12 sm:py-16">
+      {/* Breadcrumbs */}
       <Breadcrumbs
         city={{ slug: club.cities.slug, name: club.cities.name }}
         club={{ slug: club.slug, name: club.name }}
       />
-      <h1 className="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-        {club.name}
-      </h1>
-      {club.address && <p className="mt-2 text-white/50">{club.address}</p>}
-      {club.description && (
-        <p className="mt-4 max-w-2xl text-white/60">{club.description}</p>
-      )}
 
-      <div className="mt-10 space-y-8">
-        {/* Active Challenges */}
-        {currentPlayer?.user && (
-          <ChallengesList
-            challenges={challenges}
-            currentPlayerId={currentPlayer.user.id}
-            onRefresh={async () => {
-              "use server";
-            }}
-          />
+      {/* Club Header */}
+      <div className="mt-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            {club.name}
+          </h1>
+          {club.address && <p className="mt-2 text-white/50">{club.address}</p>}
+        </div>
+        {club.description && (
+          <p className="max-w-md text-right text-sm text-white/60">{club.description}</p>
+        )}
+      </div>
+
+      {/* ============================================ */}
+      {/* ACTIVITY SECTION — AT THE TOP OF THE PAGE    */}
+      {/* ============================================ */}
+      <div className="mt-8">
+        {/* Active Challenges — Most important, always first */}
+        {currentPlayer?.user && myChallenges.length > 0 && (
+          <div className="mb-6 rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-5">
+            <h2 className="text-lg font-semibold text-yellow-300">⚔️ Action Required</h2>
+            <p className="mt-1 text-sm text-white/60">
+              You have pending challenges that need your response.
+            </p>
+            <div className="mt-4">
+              <ChallengesList
+                challenges={challenges}
+                currentPlayerId={currentPlayer.user.id}
+                onRefresh={async () => {
+                  "use server";
+                }}
+              />
+            </div>
+          </div>
         )}
 
-        {/* Ladder Table */}
+        {/* Quick actions bar */}
+        {currentPlayer?.user && (
+          <div className="mb-6 flex flex-wrap gap-3">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                const challengeBtn = document.querySelector("[data-challenge-trigger]") as HTMLButtonElement;
+                challengeBtn?.click();
+              }}
+            >
+              Challenge a Player
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                const reportBtn = document.querySelector("[data-report-trigger]") as HTMLButtonElement;
+                reportBtn?.click();
+              }}
+            >
+              Report Score
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* ============================================ */}
+      {/* LADDER RANKINGS                             */}
+      {/* ============================================ */}
+      <div className="mt-8">
         <LadderTable
           standings={standings}
           challenges={challenges}
@@ -103,8 +156,10 @@ export default async function ClubHubPage({
             "use server";
           }}
         />
+      </div>
 
-        {/* Match History */}
+      {/* Match History — at the bottom */}
+      <div className="mt-8">
         <MatchHistory matches={matches} />
       </div>
     </main>

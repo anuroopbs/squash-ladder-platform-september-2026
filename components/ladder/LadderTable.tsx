@@ -38,10 +38,13 @@ export function LadderTable({
   const getActiveChallenge = (playerId: string) => {
     return challenges.find(
       (c) =>
-        (c.challenger_id === currentPlayerId && c.challenged_id && c.status === "pending") ||
-        (c.challenged_id === currentPlayerId && c.challenger_id && c.status === "pending")
+        ((c.challenger_id === currentPlayerId && c.challenged_id === playerId) ||
+          (c.challenged_id === currentPlayerId && c.challenger_id === playerId)) &&
+        c.status === "pending"
     );
   };
+
+  const currentPlayerRank = standings.find((s) => s.player_id === currentPlayerId)?.rank ?? 999;
 
   const handleChallenge = (opponent: LadderStandingRow) => {
     setSelectedOpponent(opponent);
@@ -58,9 +61,11 @@ export function LadderTable({
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-white">Ladder Rankings</h2>
-        {!isMember && currentPlayerId && (
-          <JoinLadderButton ladderId={ladderId} onJoined={onRefresh} />
-        )}
+        <div className="flex items-center gap-2">
+          {!isMember && currentPlayerId && (
+            <JoinLadderButton ladderId={ladderId} onJoined={onRefresh} />
+          )}
+        </div>
       </div>
 
       {/* Standings Table */}
@@ -75,7 +80,8 @@ export function LadderTable({
               currentPlayerId &&
               player.player_id !== currentPlayerId &&
               isMember &&
-              player.rank <= (standings.find((s) => s.player_id === currentPlayerId)?.rank ?? 999) + 3;
+              player.rank < currentPlayerRank &&
+              currentPlayerRank - player.rank <= 3;
 
             const hasActiveChallenge = getActiveChallenge(player.player_id);
 
@@ -94,16 +100,16 @@ export function LadderTable({
                 </div>
 
                 {/* Player Info */}
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-white">{player.display_name}</span>
+                    <span className="font-medium text-white truncate">{player.display_name}</span>
                     {player.player_id === currentPlayerId && (
-                      <span className="rounded bg-court-500/20 px-1.5 py-0.5 text-xs text-court-300">
+                      <span className="shrink-0 rounded bg-court-500/20 px-1.5 py-0.5 text-xs text-court-300">
                         You
                       </span>
                     )}
                     {hasActiveChallenge && (
-                      <span className="rounded bg-yellow-500/20 px-1.5 py-0.5 text-xs text-yellow-300">
+                      <span className="shrink-0 rounded bg-yellow-500/20 px-1.5 py-0.5 text-xs text-yellow-300">
                         In Challenge
                       </span>
                     )}
@@ -115,7 +121,7 @@ export function LadderTable({
 
                 {/* Actions */}
                 {currentPlayerId && player.player_id !== currentPlayerId && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     {canChallenge && (
                       <Button
                         size="sm"
