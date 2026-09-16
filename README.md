@@ -3,18 +3,9 @@
 A global, multi-tenant ladder platform: **City → Club → Ladder → Players/Matches**.
 Built with Next.js 14 (App Router), Tailwind CSS, and Supabase.
 
-## What's here (v1 — read-only drill-down)
-
-- `/` — the Global Explorer: search + a visual card grid of every city on the
-  platform, pulling live data from Supabase.
-- `/[citySlug]` — a City page listing that city's clubs as cards.
-- `/[citySlug]/[clubSlug]` — a Club Hub stub (ladder rankings/challenges/score
-  reporting are the next build step — see `architecture/city-club-ladder-schema-and-ux.md`
-  in the Claude Project for the full plan).
-
-This matches "build order" step 1 in the architecture doc: ship the
-City → Club drill-down against real data first, before auth and the
-creation wizard.
+> **For the full current build status, architecture, and standing product
+> decisions, see [`AGENTS.md`](./AGENTS.md).** This README is a quick intro;
+> AGENTS.md is the living source of truth kept in sync every session.
 
 ## Getting started
 
@@ -68,15 +59,6 @@ data as props and filters it client-side.
 
 ## Next steps
 
-1. Seed more cities/clubs (a few are already in via the SQL editor — see the
-   Claude Project's `architecture/infra-notes.md` for the live project
-   details).
-2. Add auth (`/login`, `/register`) and the `CreateLadderWizard` so the
-   "add my city/club" flow in the Explorer actually works.
-3. Build the Club Hub for real: `LadderTable`, `ChallengeModal`,
-   `ReportScoreModal`, `RecentMatchesFeed` — this replaces the stub in
-   `app/[citySlug]/[clubSlug]/page.tsx`.
-4. `/profile` — a signed-in player's dashboard across every ladder they're in.
+See [`AGENTS.md`](./AGENTS.md) for the current, maintained list of what's
+built, known gaps, and where to pick up next.
 
-Full architecture reasoning lives in the Claude Project for this app
-("Squash WebSITE") under `architecture/city-club-ladder-schema-and-ux.md`.
