@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 export function LoginForm() {
   const router = useRouter();
   const [step, setStep] = useState<"form" | "otp">("form");
-  const [method, setMethod] = useState<"email" | "phone">("email");
+  const [method, setMethod] = useState<"email" | "phone">("phone");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
@@ -125,19 +125,8 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Method tabs */}
+      {/* Method tabs — Phone first per product decision */}
       <div className="flex rounded-xl bg-white/[0.04] p-1">
-        <button
-          type="button"
-          onClick={() => setMethod("email")}
-          className={`flex-1 rounded-lg py-2 text-sm font-medium transition ${
-            method === "email"
-              ? "bg-white/10 text-white"
-              : "text-white/40 hover:text-white/60"
-          }`}
-        >
-          📧 Email
-        </button>
         <button
           type="button"
           onClick={() => setMethod("phone")}
@@ -148,6 +137,17 @@ export function LoginForm() {
           }`}
         >
           📱 Phone
+        </button>
+        <button
+          type="button"
+          onClick={() => setMethod("email")}
+          className={`flex-1 rounded-lg py-2 text-sm font-medium transition ${
+            method === "email"
+              ? "bg-white/10 text-white"
+              : "text-white/40 hover:text-white/60"
+          }`}
+        >
+          📧 Email
         </button>
       </div>
 

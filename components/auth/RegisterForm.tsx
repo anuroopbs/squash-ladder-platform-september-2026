@@ -9,13 +9,14 @@ import { createClient } from "@/lib/supabase/client";
 
 export function RegisterForm() {
   const router = useRouter();
-  const [step, setStep] = useState<"form" | "otp" | "done">("form");
-  const [method, setMethod] = useState<"email" | "phone">("email");
+  const [step, setStep] = useState<"form" | "otp" | "email" | "done">("form");
+  const [method, setMethod] = useState<"email" | "phone">("phone");
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -91,14 +92,47 @@ export function RegisterForm() {
         if (phone) {
           await savePhoneToProfile(supabase, data.user.id, phone);
         }
-        router.push("/");
-        router.refresh();
+        // Phone signups don't collect an email during the phone step —
+        // ask for one now so we always have a way to reach the player
+        // and so their profile matches email-signup players.
+        setPendingUserId(data.user.id);
+        setStep("email");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invalid code");
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleSaveEmail(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      if (pendingUserId && email) {
+        const supabase = createClient();
+        await supabase
+          .from("profiles")
+          .update({ email })
+          .eq("id", pendingUserId);
+      }
+      // Continue into the normal post-signup flow (join a ladder etc.)
+      // — searchParams.returnTo/join is handled by the page that hosts
+      // this form, so a plain redirect to home preserves that behaviour.
+      router.push("/");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't save email");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleSkipEmail() {
+    router.push("/");
+    router.refresh();
   }
 
   function formatPhone(p: string) {
@@ -114,6 +148,50 @@ export function RegisterForm() {
       .from("profiles")
       .update({ phone: phoneNum })
       .eq("id", userId);
+  }
+
+  if (step === "email") {
+    return (
+      <form onSubmit={handleSaveEmail} className="space-y-4">
+        <div className="text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-court-500/15 text-2xl ring-1 ring-inset ring-court-500/30">
+            📧
+          </div>
+          <h2 className="mt-4 font-semibold text-white">One more thing</h2>
+          <p className="mt-1.5 text-sm text-white/50">
+            Add your email so we can reach you about challenges and match updates.
+          </p>
+        </div>
+
+        <Input
+          id="signup-email"
+          type="email"
+          autoComplete="email"
+          label="Email (optional)"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        {error && (
+          <div className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300">
+            {error}
+          </div>
+        )}
+
+        <Button type="submit" loading={loading} className="w-full">
+          Continue
+        </Button>
+
+        <button
+          type="button"
+          onClick={handleSkipEmail}
+          className="w-full text-center text-sm text-white/40 hover:text-white"
+        >
+          Skip for now
+        </button>
+      </form>
+    );
   }
 
   if (step === "done") {
@@ -179,19 +257,8 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Method tabs */}
+      {/* Method tabs — Phone first per product decision */}
       <div className="flex rounded-xl bg-white/[0.04] p-1">
-        <button
-          type="button"
-          onClick={() => setMethod("email")}
-          className={`flex-1 rounded-lg py-2 text-sm font-medium transition ${
-            method === "email"
-              ? "bg-white/10 text-white"
-              : "text-white/40 hover:text-white/60"
-          }`}
-        >
-          📧 Email
-        </button>
         <button
           type="button"
           onClick={() => setMethod("phone")}
@@ -202,6 +269,17 @@ export function RegisterForm() {
           }`}
         >
           📱 Phone
+        </button>
+        <button
+          type="button"
+          onClick={() => setMethod("email")}
+          className={`flex-1 rounded-lg py-2 text-sm font-medium transition ${
+            method === "email"
+              ? "bg-white/10 text-white"
+              : "text-white/40 hover:text-white/60"
+          }`}
+        >
+          📧 Email
         </button>
       </div>
 
