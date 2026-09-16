@@ -40,6 +40,10 @@ Next.js 14 (App Router) + Tailwind CSS + Supabase (Postgres + Auth).
   `sql/migration_ladder_overhaul.sql` (already applied to prod DB)
 - **QR codes** — `components/ladder/QRCodeCard.tsx`, one per ladder on the
   Club Hub page, links straight to that ladder
+- **Support contact** — `components/ui/SupportContact.tsx`, links to
+  Instagram `@dublinsquashmentor` for help with broken features / can't
+  create a ladder / anything not working. Shown on: home page footer,
+  club page footer, club page empty-state (no ladder set up yet).
 - **PWA** — `public/manifest.json` (name: "Squash Ladder"), `public/sw.js`,
   `components/ui/PWAInstaller.tsx` install banner. Installable on Android
   + iOS via "Add to Home Screen".

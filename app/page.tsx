@@ -5,6 +5,7 @@ import { HowItWorks } from "@/components/home/HowItWorks";
 import { VisionSection } from "@/components/home/VisionSection";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import { PWAInstaller } from "@/components/ui/PWAInstaller";
+import { SupportContact } from "@/components/ui/SupportContact";
 import { createClient } from "@/lib/supabase/server";
 
 export const revalidate = 60;
@@ -102,6 +103,7 @@ export default async function HomePage() {
           Built with ❤️ for the squash community. Play fair, climb high, make
           friends.
         </p>
+        <SupportContact />
       </footer>
 
       {/* Floating UI */}
