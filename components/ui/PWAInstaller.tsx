@@ -25,21 +25,16 @@ export function PWAInstaller() {
     const handler = (e: any) => {
       e.preventDefault();
       setInstallPrompt(e);
-      setShowBanner(true);
+      // Only show the banner once we have a REAL install prompt to act on.
+      // Previously this showed on a blind timer regardless of whether the
+      // browser actually granted beforeinstallprompt, so "Install" did
+      // nothing when clicked (installPrompt was null) -- this was the bug.
+      const dismissed = sessionStorage.getItem("pwa-banner-dismissed");
+      if (!dismissed) setShowBanner(true);
     };
 
     window.addEventListener("beforeinstallprompt", handler);
     window.addEventListener("appinstalled", () => setIsStandalone(true));
-
-    // Show banner if not dismissed
-    const dismissed = sessionStorage.getItem("pwa-banner-dismissed");
-    if (!dismissed) {
-      const timer = setTimeout(() => setShowBanner(true), 1500);
-      return () => {
-        clearTimeout(timer);
-        window.removeEventListener("beforeinstallprompt", handler);
-      };
-    }
 
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
