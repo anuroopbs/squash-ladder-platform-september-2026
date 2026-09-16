@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { createClient } from "@/lib/supabase/client";
-import { toUserMessage } from "@/lib/errors";
+import { AppError, toUserMessage } from "@/lib/errors";
 import type { LadderStandingRow } from "@/lib/types/database";
 
 interface ChallengeModalProps {
@@ -25,7 +25,7 @@ export function ChallengeModal({ opponent, ladderId, onClose, onSuccess }: Chall
     try {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("You must be signed in to challenge");
+      if (!user) throw new AppError("ERR_AUTH_NOT_SIGNED_IN", "You must be signed in to challenge");
 
       // Get current user's rank
       const { data: playerRow } = await supabase
@@ -35,12 +35,12 @@ export function ChallengeModal({ opponent, ladderId, onClose, onSuccess }: Chall
         .eq("player_id", user.id)
         .single();
 
-      if (!playerRow) throw new Error("You must be a member of this ladder");
+      if (!playerRow) throw new AppError("ERR_LADDER_NOT_MEMBER", "You must be a member of this ladder");
 
       // Validate rank gap (1-3 positions above)
       const gap = playerRow.rank - opponent.rank;
       if (gap < 1 || gap > 3) {
-        throw new Error(`You can only challenge players 1-3 positions above you (gap: ${gap})`);
+        throw new AppError("ERR_CHALLENGE_RANK_GAP", `You can only challenge players 1-3 positions above you (gap: ${gap})`);
       }
 
       // Check for existing active challenge
@@ -52,7 +52,7 @@ export function ChallengeModal({ opponent, ladderId, onClose, onSuccess }: Chall
         .maybeSingle();
 
       if (existingChallenge) {
-        throw new Error("You already have an active challenge");
+        throw new AppError("ERR_CHALLENGE_ALREADY_ACTIVE", "You already have an active challenge");
       }
 
       // Create the challenge

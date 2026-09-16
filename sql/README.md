@@ -36,6 +36,7 @@
 | 011 | `011_add_email_to_profiles.sql` | Adds `profiles.email` column, updates `handle_new_user()` trigger, backfills from `auth.users` | ✅ Applied |
 | 012 | `012_remove_specific_players.sql` | Removes 7 named test/demo players from all ladders and challenges | ✅ Applied |
 | 013 | `013_fix_race_conditions.sql` | Makes `unique(ladder_id, rank)` deferrable, rewrites `swap_player_ranks()` to swap directly instead of via a `-1` scratch value, explicit RPC grants | ✅ Applied |
+| 014 | `014_re_rank_all_ladders.sql` | **Re-ranks all ladders globally** — compacts rank sequences so there are no gaps left behind by player deletions. Idempotent, safe to re-run. | ⏳ Needs manual apply |
 
 ## Current known state of `profiles` table columns
 

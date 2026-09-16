@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { createClient } from "@/lib/supabase/client";
-import { toUserMessage } from "@/lib/errors";
+import { AppError, toUserMessage } from "@/lib/errors";
 import type { LadderStandingRow } from "@/lib/types/database";
 
 interface ReportScoreModalProps {
@@ -35,7 +35,7 @@ export function ReportScoreModal({ opponent, ladderId, onClose, onSuccess }: Rep
     try {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("You must be signed in");
+      if (!user) throw new AppError("ERR_AUTH_NOT_SIGNED_IN", "You must be signed in");
 
       const { data: playerRow } = await supabase
         .from("ladder_players")
@@ -44,7 +44,7 @@ export function ReportScoreModal({ opponent, ladderId, onClose, onSuccess }: Rep
         .eq("player_id", user.id)
         .single();
 
-      if (!playerRow) throw new Error("You must be a member of this ladder");
+      if (!playerRow) throw new AppError("ERR_LADDER_NOT_MEMBER", "You must be a member of this ladder");
 
       const winnerId = winner === "me" ? user.id : opponent.player_id;
 
