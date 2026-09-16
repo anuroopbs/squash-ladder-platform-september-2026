@@ -59,7 +59,7 @@ Next.js 14 (App Router) + Tailwind CSS + Supabase (Postgres + Auth).
   `handle_new_user` trigger). Emails live in `auth.users`, not `profiles`
   — need service_role key or Dashboard SQL Editor to read them, `anon` key
   can't join across schemas.
-- **No automated tests** — zero test coverage, biggest architectural gap
+- **No automated tests** — ✅ RESOLVED (see `lib/*.test.ts`, run `npm test`)
 - **Some `as any` / `as unknown as` casts** remain in older query files —
   flagged but not all cleaned up
 - **Admin panel** — none; all data ops go through SQL Editor manually

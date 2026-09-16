@@ -41,7 +41,15 @@
    - Fix 5: All 13 SQL files renamed with `001`–`013` numeric prefixes in
      verified git-commit chronological order; `sql/README.md` created
      documenting what each does and which are `_SUPERSEDED`.
-   - Fix 6 (concurrency tests) — NOT done, biggest remaining gap.
+   - Fix 6: Vitest test suite added — `lib/slugify.test.ts` (6 tests),
+     `lib/errors.test.ts` (8 tests, covers the error-mapping layer from
+     Fix 4), `lib/queries/ladder-concurrency.test.ts` (2 concurrency tests
+     for the race conditions fixed in Fix 1-2 — gated to skip unless
+     `TEST_SUPABASE_URL`/`TEST_SUPABASE_SERVICE_ROLE_KEY` env vars point
+     at a dedicated test database, never runs against production).
+     `npm test` runs the full suite; `npm run test:concurrency` runs just
+     the DB-backed ones. 14 tests passing, 2 correctly skipped without
+     test DB credentials.
 4. **Support contact integrated:** `components/ui/SupportContact.tsx` —
    links to Instagram `@dublinsquashmentor` for "trouble creating a ladder /
    joining / anything broken." Added to: home page footer, club page
