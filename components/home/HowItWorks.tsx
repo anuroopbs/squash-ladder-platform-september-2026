@@ -6,7 +6,7 @@ export function HowItWorks() {
       <div className="mx-auto max-w-2xl text-center">
         <h2 className="text-2xl font-bold text-white">How It Works</h2>
         <p className="mt-2 text-white/60">
-          Simple, competitive, and social. Here's how to get started.
+          Simple, competitive, and social. Here&lsquo;s how to get started.
         </p>
       </div>
 

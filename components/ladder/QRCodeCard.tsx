@@ -29,6 +29,7 @@ export function QRCodeCard({ clubName, ladderName, url }: QRCodeCardProps) {
 
       {showQR && (
         <div className="mt-4 flex flex-col items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={qrUrl}
             alt={`QR Code for ${clubName} - ${ladderName}`}

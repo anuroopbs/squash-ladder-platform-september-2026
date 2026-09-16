@@ -67,7 +67,7 @@ export default async function ProfilePage() {
         ) : (
           <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
             <p className="text-sm text-white/50">
-              You haven't joined any ladders yet.
+              You haven&lsquo;t joined any ladders yet.
             </p>
           </div>
         )}

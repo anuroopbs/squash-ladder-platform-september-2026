@@ -6,7 +6,7 @@ export function VisionSection() {
       <div className="mx-auto max-w-2xl text-center">
         <h2 className="text-2xl font-bold text-white">Our Vision</h2>
         <p className="mt-2 text-white/60">
-          More than just rankings — it's about community.
+          More than just rankings &mdash; it&lsquo;s about community.
         </p>
       </div>
 
