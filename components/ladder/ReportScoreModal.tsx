@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { createClient } from "@/lib/supabase/client";
+import { toUserMessage } from "@/lib/errors";
 import type { LadderStandingRow } from "@/lib/types/database";
 
 interface ReportScoreModalProps {
@@ -46,62 +47,29 @@ export function ReportScoreModal({ opponent, ladderId, onClose, onSuccess }: Rep
       if (!playerRow) throw new Error("You must be a member of this ladder");
 
       const winnerId = winner === "me" ? user.id : opponent.player_id;
-      const loserId = winner === "me" ? opponent.player_id : user.id;
 
-      // Report the match
-      const { error: insertError } = await supabase.from("matches").insert({
-        ladder_id: ladderId,
-        player1_id: user.id,
-        player2_id: opponent.player_id,
-        winner_id: winnerId,
-        score,
-        status: "pending_confirmation",
-        reported_by: user.id,
-        played_at: new Date().toISOString().split("T")[0],
+      // Delegate to the atomic report_match_and_swap() Postgres function
+      // instead of inserting the match and then swapping ranks with three
+      // separate client-side UPDATEs (via a fragile rank = -1 scratch
+      // value). The DB function does the insert + conditional swap in one
+      // transaction, using SELECT ... FOR UPDATE to avoid concurrent
+      // reports colliding.
+      const { error: rpcError } = await supabase.rpc("report_match_and_swap", {
+        ladder_uuid: ladderId,
+        challenge_uuid: null,
+        p1_uuid: user.id,
+        p2_uuid: opponent.player_id,
+        winner_uuid: winnerId,
+        match_score: score,
+        reported_by_uuid: user.id,
       });
 
-      if (insertError) throw insertError;
-
-      // If the lower-ranked player won, swap ranks
-      const { data: winnerRow } = await supabase
-        .from("ladder_players")
-        .select("rank")
-        .eq("ladder_id", ladderId)
-        .eq("player_id", winnerId)
-        .single();
-
-      const { data: loserRow } = await supabase
-        .from("ladder_players")
-        .select("rank")
-        .eq("ladder_id", ladderId)
-        .eq("player_id", loserId)
-        .single();
-
-      if (winnerRow && loserRow && winnerRow.rank > loserRow.rank) {
-        // Swap ranks atomically using two updates
-        await supabase
-          .from("ladder_players")
-          .update({ rank: -1 })
-          .eq("ladder_id", ladderId)
-          .eq("player_id", winnerId);
-
-        await supabase
-          .from("ladder_players")
-          .update({ rank: winnerRow.rank })
-          .eq("ladder_id", ladderId)
-          .eq("player_id", loserId);
-
-        await supabase
-          .from("ladder_players")
-          .update({ rank: loserRow.rank })
-          .eq("ladder_id", ladderId)
-          .eq("player_id", winnerId);
-      }
+      if (rpcError) throw rpcError;
 
       onSuccess();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to report score");
+      setError(toUserMessage(err));
     } finally {
       setLoading(false);
     }

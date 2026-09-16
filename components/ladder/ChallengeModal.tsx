@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { createClient } from "@/lib/supabase/client";
+import { toUserMessage } from "@/lib/errors";
 import type { LadderStandingRow } from "@/lib/types/database";
 
 interface ChallengeModalProps {
@@ -67,7 +68,7 @@ export function ChallengeModal({ opponent, ladderId, onClose, onSuccess }: Chall
       onSuccess();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create challenge");
+      setError(toUserMessage(err));
     } finally {
       setLoading(false);
     }

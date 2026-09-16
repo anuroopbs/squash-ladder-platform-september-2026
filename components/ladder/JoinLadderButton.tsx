@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
+import { toUserMessage } from "@/lib/errors";
 
 interface JoinLadderButtonProps {
   ladderId: string;
@@ -40,7 +41,7 @@ export function JoinLadderButton({ ladderId, onJoined }: JoinLadderButtonProps) 
 
       onJoined();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to join ladder");
+      setError(toUserMessage(err));
     } finally {
       setLoading(false);
     }
