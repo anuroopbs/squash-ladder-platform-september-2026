@@ -12,6 +12,11 @@ A global, multi-tenant squash/racket-sports ladder platform:
 **City → Club → Ladder → Players → Challenges → Matches.**
 Next.js 14 (App Router) + Tailwind CSS + Supabase (Postgres + Auth).
 
+> **⚠️ MANDATORY: Read `CHECKLIST.md` in this repo root before AND after
+> every change.** It covers build/lint/test status, PWA health, and mobile
+> interface checks. Re-run its checks and update the status columns every
+> session — this applies to every model working on this repo, not just one.
+
 - **Repo root:** `C:\Users\anuro\CascadeProjects\2026-Sep-Squash-Ladder`
 - **Branch:** `feature/ladder-system-overhaul` (main is untouched, safe rollback)
 - **GitHub:** `github.com/anuroopbs/squash-ladder-platform-september-2026`
