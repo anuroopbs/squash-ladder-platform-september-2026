@@ -10,6 +10,7 @@ import { LadderTable } from "@/components/ladder/LadderTable";
 import { ChallengesList } from "@/components/ladder/ChallengesList";
 import { MatchHistory } from "@/components/ladder/MatchHistory";
 import { JoinLadderButton } from "@/components/ladder/JoinLadderButton";
+import { QRCodeCard } from "@/components/ladder/QRCodeCard";
 import { Button } from "@/components/ui/Button";
 
 export const revalidate = 60;
@@ -202,6 +203,24 @@ export default async function ClubHubPage({
       {/* Match History — at the bottom */}
       <div className="mt-8">
         <MatchHistory matches={matches} />
+      </div>
+
+      {/* QR Codes for this club's ladders */}
+      <div className="mt-10">
+        <h2 className="text-lg font-semibold text-white">📱 Share This Ladder</h2>
+        <p className="mt-1 text-sm text-white/50">
+          Print and display these QR codes. Players can scan to view rankings directly.
+        </p>
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {ladders.map((ladder) => (
+            <QRCodeCard
+              key={ladder.id}
+              clubName={club.name}
+              ladderName={ladder.name}
+              url={`https://squash-ladder-platform-6gdpzei83.vercel.app/${params.citySlug}/${params.clubSlug}?ladder=${ladder.slug}`}
+            />
+          ))}
+        </div>
       </div>
     </main>
   );
