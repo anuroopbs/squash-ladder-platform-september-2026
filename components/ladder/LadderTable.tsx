@@ -26,11 +26,13 @@ export function LadderTable({
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [selectedOpponent, setSelectedOpponent] = useState<LadderStandingRow | null>(null);
 
-  const getRankBadge = (rank: number) => {
-    if (rank === 1) return "🥇";
-    if (rank === 2) return "🥈";
-    if (rank === 3) return "🥉";
-    return `#${rank}`;
+  const getRankBadge = (rank: number) => `#${rank}`;
+
+  const getRankBadgeClass = (rank: number) => {
+    if (rank === 1) return "text-yellow-400"; // gold
+    if (rank === 2) return "text-slate-300"; // silver
+    if (rank === 3) return "text-amber-600"; // bronze
+    return "text-white/80";
   };
 
   const getActiveChallenge = (playerId: string) => {
@@ -94,7 +96,7 @@ export function LadderTable({
               >
                 {/* Mobile: stacked layout */}
                 <div className="flex items-center gap-3">
-                  <div className="w-12 text-center text-lg font-bold text-white/80 shrink-0">
+                  <div className={`w-12 text-center text-lg font-bold shrink-0 ${getRankBadgeClass(player.rank)}`}>
                     {getRankBadge(player.rank)}
                   </div>
                   <div className="flex-1 min-w-0">

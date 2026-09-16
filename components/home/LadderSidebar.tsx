@@ -37,8 +37,18 @@ export function LadderSidebar({ previews }: LadderSidebarProps) {
               <div className="mt-3 space-y-1">
                 {preview.players.slice(0, 5).map((player) => (
                   <div key={player.rank} className="flex items-center gap-2 text-sm">
-                    <span className="w-6 text-right text-xs font-medium text-white/60">
-                      {player.rank === 1 ? "🥇" : player.rank === 2 ? "🥈" : player.rank === 3 ? "🥉" : `#${player.rank}`}
+                    <span
+                      className={`w-6 text-right text-xs font-medium ${
+                        player.rank === 1
+                          ? "text-yellow-400"
+                          : player.rank === 2
+                          ? "text-slate-300"
+                          : player.rank === 3
+                          ? "text-amber-600"
+                          : "text-white/60"
+                      }`}
+                    >
+                      #{player.rank}
                     </span>
                     <span className="text-white/80">{player.name}</span>
                   </div>
