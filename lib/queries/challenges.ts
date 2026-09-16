@@ -15,37 +15,24 @@ export async function getChallengesByLadder(
   ladderId: string
 ): Promise<ChallengeWithProfiles[]> {
   const supabase = createClient();
+  // Embedded select — 1 query instead of 1 + 2N (was firing two profile
+  // lookups per challenge row in a loop).
   const { data, error } = await supabase
     .from("challenges")
-    .select("*")
+    .select(
+      "*, challenger:profiles!challenger_id(display_name), challenged:profiles!challenged_id(display_name)"
+    )
     .eq("ladder_id", ladderId)
     .order("created_at", { ascending: false });
 
   if (error) throw error;
   if (!data) return [];
 
-  // Enrich with profile names
-  const enriched: ChallengeWithProfiles[] = [];
-  for (const c of data) {
-    const [challenger, challenged] = await Promise.all([
-      supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("id", c.challenger_id)
-        .single(),
-      supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("id", c.challenged_id)
-        .single(),
-    ]);
-    enriched.push({
-      ...c,
-      challenger_name: challenger.data?.display_name ?? "Unknown",
-      challenged_name: challenged.data?.display_name ?? "Unknown",
-    });
-  }
-  return enriched;
+  return data.map((c) => ({
+    ...c,
+    challenger_name: (c as any).challenger?.display_name ?? "Unknown",
+    challenged_name: (c as any).challenged?.display_name ?? "Unknown",
+  }));
 }
 
 export async function getChallengesByPlayer(
@@ -54,34 +41,20 @@ export async function getChallengesByPlayer(
   const supabase = createClient();
   const { data, error } = await supabase
     .from("challenges")
-    .select("*")
+    .select(
+      "*, challenger:profiles!challenger_id(display_name), challenged:profiles!challenged_id(display_name)"
+    )
     .or(`challenger_id.eq.${playerId},challenged_id.eq.${playerId}`)
     .order("created_at", { ascending: false });
 
   if (error) throw error;
   if (!data) return [];
 
-  const enriched: ChallengeWithProfiles[] = [];
-  for (const c of data) {
-    const [challenger, challenged] = await Promise.all([
-      supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("id", c.challenger_id)
-        .single(),
-      supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("id", c.challenged_id)
-        .single(),
-    ]);
-    enriched.push({
-      ...c,
-      challenger_name: challenger.data?.display_name ?? "Unknown",
-      challenged_name: challenged.data?.display_name ?? "Unknown",
-    });
-  }
-  return enriched;
+  return data.map((c) => ({
+    ...c,
+    challenger_name: (c as any).challenger?.display_name ?? "Unknown",
+    challenged_name: (c as any).challenged?.display_name ?? "Unknown",
+  }));
 }
 
 export async function createChallenge(input: {
@@ -122,9 +95,12 @@ export async function getMatchesByLadder(
   limit = 10
 ): Promise<MatchWithProfiles[]> {
   const supabase = createClient();
+  // Embedded select — 1 query instead of 1 + 3N.
   const { data, error } = await supabase
     .from("matches")
-    .select("*")
+    .select(
+      "*, p1:profiles!player1_id(display_name), p2:profiles!player2_id(display_name), winner:profiles!winner_id(display_name)"
+    )
     .eq("ladder_id", ladderId)
     .order("played_at", { ascending: false })
     .limit(limit);
@@ -132,33 +108,12 @@ export async function getMatchesByLadder(
   if (error) throw error;
   if (!data) return [];
 
-  const enriched: MatchWithProfiles[] = [];
-  for (const m of data) {
-    const [p1, p2, winner] = await Promise.all([
-      supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("id", m.player1_id)
-        .single(),
-      supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("id", m.player2_id)
-        .single(),
-      supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("id", m.winner_id)
-        .single(),
-    ]);
-    enriched.push({
-      ...m,
-      player1_name: p1.data?.display_name ?? "Unknown",
-      player2_name: p2.data?.display_name ?? "Unknown",
-      winner_name: winner.data?.display_name ?? "Unknown",
-    });
-  }
-  return enriched;
+  return data.map((m) => ({
+    ...m,
+    player1_name: (m as any).p1?.display_name ?? "Unknown",
+    player2_name: (m as any).p2?.display_name ?? "Unknown",
+    winner_name: (m as any).winner?.display_name ?? "Unknown",
+  }));
 }
 
 export async function reportMatch(input: {
@@ -223,20 +178,16 @@ export async function joinLadder(
   playerId: string
 ): Promise<void> {
   const supabase = createClient();
-  // Get current max rank
-  const { data: maxRow } = await supabase
-    .from("ladder_players")
-    .select("rank")
-    .eq("ladder_id", ladderId)
-    .order("rank", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  const nextRank = (maxRow?.rank ?? 0) + 1;
-
-  const { error } = await supabase
-    .from("ladder_players")
-    .insert({ ladder_id: ladderId, player_id: playerId, rank: nextRank });
+  // Delegate to the atomic join_ladder() Postgres function instead of
+  // reimplementing "read max rank, insert next rank" here — that pattern
+  // has a race condition (two concurrent joins can read the same max
+  // rank and collide on the unique(ladder_id, rank) constraint, or in
+  // rare timing insert non-adjacent ranks). The DB function does the
+  // read-and-insert in one atomic statement server-side.
+  const { error } = await supabase.rpc("join_ladder", {
+    ladder_uuid: ladderId,
+    player_uuid: playerId,
+  });
 
   if (error) throw error;
 }
