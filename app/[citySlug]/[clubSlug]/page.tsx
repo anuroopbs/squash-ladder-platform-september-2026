@@ -11,7 +11,6 @@ import { ChallengesList } from "@/components/ladder/ChallengesList";
 import { MatchHistory } from "@/components/ladder/MatchHistory";
 import { JoinLadderButton } from "@/components/ladder/JoinLadderButton";
 import { QRCodeCard } from "@/components/ladder/QRCodeCard";
-import { Button } from "@/components/ui/Button";
 import { SupportContact } from "@/components/ui/SupportContact";
 
 export const revalidate = 60;
@@ -171,32 +170,6 @@ export default async function ClubHubPage({
                 currentPlayerId={currentPlayer.user.id}
               />
             </div>
-          </div>
-        )}
-
-        {/* Quick actions bar */}
-        {currentPlayer?.user && (
-          <div className="mb-6 flex flex-wrap gap-3">
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => {
-                const challengeBtn = document.querySelector("[data-challenge-trigger]") as HTMLButtonElement;
-                challengeBtn?.click();
-              }}
-            >
-              Challenge a Player
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                const reportBtn = document.querySelector("[data-report-trigger]") as HTMLButtonElement;
-                reportBtn?.click();
-              }}
-            >
-              Report Score
-            </Button>
           </div>
         )}
       </div>
