@@ -1,6 +1,6 @@
 {
-  "name": "Ladder — Find Your Local Racket Sports Ladder",
-  "short_name": "Ladder",
+  "name": "Squash Ladder — Find Your Local Racket Sports Ladder",
+  "short_name": "Squash Ladder",
   "description": "Find your city, find your club, join the ladder. Squash, padel, and racquetball ladders for players everywhere.",
   "start_url": "/",
   "display": "standalone",

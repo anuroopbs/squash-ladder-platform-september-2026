@@ -3,7 +3,7 @@ import "./globals.css";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 
 export const metadata: Metadata = {
-  title: "Ladder — find your local racket sports ladder",
+  title: "Squash Ladder — find your local racket sports ladder",
   description:
     "Find your city, find your club, join the ladder. Squash, padel, and racquetball ladders for players everywhere.",
   manifest: "/manifest.json",
