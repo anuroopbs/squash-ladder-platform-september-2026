@@ -75,9 +75,12 @@ Next.js 14 (App Router) + Tailwind CSS + Supabase (Postgres + Auth).
   these manually, they are pasted **inline in chat**, never as a file
   attachment (user can't open `.sql` files from Vercel/GitHub previews).
 - `sql/` folder is a running log of every migration ever applied — treat
-  it as history, not a single source of truth. `schema.sql` is the
-  original base; everything after `migration_ladder_overhaul.sql` are
-  incremental patches.
+  it as history, not a single source of truth. Files are numbered
+  `001`–`013`+ in the order they were actually applied to production;
+  see `sql/README.md` for the full table and which files are
+  `_SUPERSEDED` by a later one. `001_schema.sql` is the original base;
+  everything after `002_migration_ladder_overhaul.sql` are incremental
+  patches. When adding a new migration, use the next sequential number.
 
 ## 🎯 Standing product decisions (don't relitigate)
 
