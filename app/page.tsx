@@ -76,15 +76,15 @@ export default async function HomePage() {
         </p>
       </div>
 
-      {/* Main Content: Explorer (left) + All Ladders (right) */}
-      <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_400px]">
-        {/* Left: City Explorer */}
+      {/* Main Content: Explorer (left) + All Ladders (right) — 50/50 split */}
+      <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-2">
+        {/* Left: City Explorer — 50% */}
         <div>
           <h2 className="text-lg font-semibold text-white mb-4">Explore Cities</h2>
           <GlobalExplorer cities={cities} />
         </div>
 
-        {/* Right: All Ladders with search */}
+        {/* Right: All Ladders with search — 50% */}
         <div className="lg:sticky lg:top-20 lg:self-start">
           <AllLadders ladders={ladders} />
         </div>
