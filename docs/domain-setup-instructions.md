@@ -1,50 +1,47 @@
 # Domain Setup Instructions — squashladder.in → Vercel
 
-> **Goal:** Point the domain `squashladder.in` (purchased on Namecheap) to the Vercel project `squash-ladder-platform` so the live site is accessible at `https://squashladder.in`.
+> **Goal:** Point the domain `squashladder.in` (purchased on GoDaddy) to the Vercel project `squash-ladder-platform` so the live site is accessible at `https://squashladder.in`.
 >
 > **Time required:** 5–10 minutes (plus 5–30 min DNS propagation)
-> **Prerequisites:** Namecheap account access (already logged in or credentials available), Vercel account access
+> **Prerequisites:** GoDaddy account access, Vercel account access
 
 ---
 
 ## Current State
 
-- **Domain:** `squashladder.in` (purchased on Namecheap, registered Sep 16, 2026)
+- **Domain:** `squashladder.in` (purchased on GoDaddy, registered Sep 16, 2026)
 - **Vercel project:** `anuroopquestion7-gmailcoms-projects/squash-ladder-platform`
 - **Domain already added to Vercel:** ✅ Yes (via `vercel domains add`)
 - **DNS configured:** ❌ No — this is what needs to be done
-- **Current production URL (temporary):** https://squash-ladder-platform-l1xt0dazh.vercel.app
 
 ---
 
 ## What Needs to Be Done
 
-### STEP 1: Open Namecheap Domain List
+### STEP 1: Open GoDaddy Domain Manager
 
 1. Open Chrome browser
-2. Go to: https://ap.www.namecheap.com/domains/domainlist/
-3. If prompted to log in, use the Namecheap account credentials
-4. Find `squashladder.in` in the domain list
-5. Click the **"Manage"** button next to `squashladder.in`
+2. Go to: https://dcc.godaddy.com/domains/
+3. If prompted to log in, use GoDaddy account credentials
+4. Find `squashladder.in` in the domains list
+5. Click on the domain name to open **DNS Management**
 
 ### STEP 2: Change Nameservers to Vercel DNS
 
-1. On the domain management page, look for the **"Nameservers"** section (usually near the top)
-2. Current setting is likely "Namecheap BasicDNS" or "Namecheap Web Hosting DNS"
-3. Change the dropdown to **"Custom DNS"**
+1. Scroll down to the **"Nameservers"** section
+2. Click the **"Change"** button next to the current nameservers
+3. Select **"Enter my own nameservers (advanced)"**
 4. Enter the following two nameservers exactly:
-   ```
-   ns1.vercel-dns.com
-   ns2.vercel-dns.com
-   ```
-5. Click the **green checkmark / Save** button next to the nameservers field
-6. Wait for the confirmation message: "Domain information updated successfully"
+   - `ns1.vercel-dns.com`
+   - `ns2.vercel-dns.com`
+5. Click **"Save"**
+6. Confirm any verification prompts (GoDaddy may require 2FA)
 
 ### STEP 3: Wait for DNS Propagation
 
 1. DNS propagation typically takes **5–30 minutes**
-2. You can check propagation status at: https://www.whatsmydns.net/#A/squashladder.in
-3. When propagation is complete, the A record should show `76.76.21.21` globally
+2. You can check propagation status at: https://www.whatsmydns.net/#NS/squashladder.in
+3. When propagation is complete, nameservers should show `ns1.vercel-dns.com` and `ns2.vercel-dns.com` globally
 
 ### STEP 4: Verify in Vercel
 
@@ -62,7 +59,7 @@
    cd C:/Users/anuro/CascadeProjects/2026-Sep-Squash-Ladder
    vercel deploy --prod --force
    ```
-3. Wait for deployment to complete (should show `squashladder.app` or the `.in` domain)
+3. Wait for deployment to complete — URL should now show `squashladder.in`
 
 ### STEP 6: Test the Live Site
 
@@ -81,32 +78,24 @@
 ### Issue: "Domain not verified" after 30 minutes
 
 **Fix:**
-1. Go to https://www.whatsmydns.net/#A/squashladder.in
-2. Check if the A record shows `76.76.21.21`
-3. If it shows Namecheap's default IPs instead, the nameserver change didn't save — redo STEP 2
-4. If it shows a mix of old and new, wait longer (up to 48 hours in rare cases)
+1. Go to https://www.whatsmydns.net/#NS/squashladder.in
+2. Check if nameservers show `ns1.vercel-dns.com` and `ns2.vercel-dns.com`
+3. If they show GoDaddy's nameservers instead, the change didn't save — redo STEP 2
 
-### Issue: "Too many redirects" or SSL error
+### Issue: SSL certificate error
 
 **Fix:**
 1. Go to Vercel Dashboard → Project → Settings → Domains
 2. Click the `...` next to `squashladder.in`
 3. Select **"Refresh"** or **"Re-verify"**
-4. If SSL issue persists, ensure `Force HTTPS` is enabled in Vercel settings
-
-### Issue: Old Vercel URL shows instead of domain
-
-**Fix:**
-1. Clear browser cache (Ctrl+Shift+Delete → clear cached images and files)
-2. Try in an incognito/private window
-3. Run `vercel deploy --prod --force` to ensure latest build is deployed
+4. Wait 5 minutes for SSL to provision
 
 ### Issue: www.squashladder.in doesn't work
 
 **Fix:**
 1. In Vercel Domains settings, add `www.squashladder.in` as an additional domain
-2. Set it to redirect to `squashladder.in` (301 redirect)
-3. Or add a CNAME record at Namecheap: `www` → `cname.vercel-dns.com`
+2. Set it to redirect (301) to `squashladder.in`
+3. In GoDaddy DNS, add a CNAME record: `www` → `cname.vercel-dns.com`
 
 ---
 
@@ -124,8 +113,7 @@
 
 ## Quick Reference
 
-- **Namecheap domain list:** https://ap.www.namecheap.com/domains/domainlist/
+- **GoDaddy domain manager:** https://dcc.godaddy.com/domains/
 - **Vercel project settings:** https://vercel.com/anuroopquestion7-gmailcoms-projects/squash-ladder-platform/settings/domains
-- **DNS propagation checker:** https://www.whatsmydns.net/#A/squashladder.in
+- **DNS propagation checker:** https://www.whatsmydns.net/#NS/squashladder.in
 - **Vercel nameservers:** `ns1.vercel-dns.com`, `ns2.vercel-dns.com`
-- **Fallback A record:** `76.76.21.21`
