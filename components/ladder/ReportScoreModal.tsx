@@ -49,6 +49,20 @@ export function ReportScoreModal({ opponent, ladderId, onClose }: ReportScoreMod
 
       const winnerId = winner === "me" ? user.id : opponent.player_id;
 
+      // Look up any pending/accepted challenge between these two players so
+      // report_match_and_swap() can mark it completed. Without this, the
+      // challenge lifecycle never finishes -- it stays "pending"/"accepted"
+      // forever, which permanently blocks the challenger from creating a
+      // new challenge (only 1 active challenge per player is allowed).
+      const { data: relatedChallenge } = await supabase
+        .from("challenges")
+        .select("id")
+        .or(
+          `and(challenger_id.eq.${user.id},challenged_id.eq.${opponent.player_id}),and(challenger_id.eq.${opponent.player_id},challenged_id.eq.${user.id})`
+        )
+        .in("status", ["pending", "accepted"])
+        .maybeSingle();
+
       // Delegate to the atomic report_match_and_swap() Postgres function
       // instead of inserting the match and then swapping ranks with three
       // separate client-side UPDATEs (via a fragile rank = -1 scratch
@@ -57,7 +71,7 @@ export function ReportScoreModal({ opponent, ladderId, onClose }: ReportScoreMod
       // reports colliding.
       const { error: rpcError } = await supabase.rpc("report_match_and_swap", {
         ladder_uuid: ladderId,
-        challenge_uuid: null,
+        challenge_uuid: relatedChallenge?.id ?? null,
         p1_uuid: user.id,
         p2_uuid: opponent.player_id,
         winner_uuid: winnerId,

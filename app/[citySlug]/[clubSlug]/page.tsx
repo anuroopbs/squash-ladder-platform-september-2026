@@ -150,7 +150,7 @@ export default async function ClubHubPage({
               key={ladder.id}
               clubName={club.name}
               ladderName={ladder.name}
-              url={`https://squash-ladder-platform-6gdpzei83.vercel.app/${params.citySlug}/${params.clubSlug}?ladder=${ladder.slug}`}
+              url={`https://squashladder.in/${params.citySlug}/${params.clubSlug}`}
             />
           ))}
         </div>

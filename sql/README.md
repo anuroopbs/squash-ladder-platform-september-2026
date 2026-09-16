@@ -37,6 +37,7 @@
 | 012 | `012_remove_specific_players.sql` | Removes 7 named test/demo players from all ladders and challenges | ✅ Applied |
 | 013 | `013_fix_race_conditions.sql` | Makes `unique(ladder_id, rank)` deferrable, rewrites `swap_player_ranks()` to swap directly instead of via a `-1` scratch value, explicit RPC grants | ✅ Applied |
 | 014 | `014_re_rank_all_ladders.sql` | **Re-ranks all ladders globally** — compacts rank sequences so there are no gaps left behind by player deletions. Idempotent, safe to re-run. | ⏳ Needs manual apply |
+| 015 | `015_cleanup_stuck_challenges.sql` | **Fixes stuck challenges** — marks pending/accepted challenges as completed if a match was already played between the two players (root cause: ReportScoreModal wasn't passing challenge_uuid, fixed in app code). | ⏳ Needs manual apply |
 
 ## Current known state of `profiles` table columns
 

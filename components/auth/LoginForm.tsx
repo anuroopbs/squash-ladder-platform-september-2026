@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -9,6 +9,8 @@ import { createClient } from "@/lib/supabase/client";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get("returnTo") || "/";
   const [step, setStep] = useState<"form" | "otp">("form");
   const [method, setMethod] = useState<"email" | "phone">("phone");
   const [email, setEmail] = useState("");
@@ -37,7 +39,7 @@ export function LoginForm() {
       if (method === "email") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        router.push("/");
+        router.push(returnTo);
         router.refresh();
       } else {
         // Phone OTP
@@ -67,7 +69,7 @@ export function LoginForm() {
         type: "sms",
       });
       if (error) throw error;
-      router.push("/");
+      router.push(returnTo);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invalid code");
