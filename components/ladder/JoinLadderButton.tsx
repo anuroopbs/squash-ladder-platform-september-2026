@@ -1,16 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
 import { toUserMessage } from "@/lib/errors";
 
 interface JoinLadderButtonProps {
   ladderId: string;
-  onJoined: () => void;
 }
 
-export function JoinLadderButton({ ladderId, onJoined }: JoinLadderButtonProps) {
+export function JoinLadderButton({ ladderId }: JoinLadderButtonProps) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,7 +40,7 @@ export function JoinLadderButton({ ladderId, onJoined }: JoinLadderButtonProps) 
 
       if (rpcError) throw rpcError;
 
-      onJoined();
+      router.refresh();
     } catch (err) {
       setError(toUserMessage(err));
     } finally {

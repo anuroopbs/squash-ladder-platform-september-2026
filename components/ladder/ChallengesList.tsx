@@ -3,15 +3,16 @@
 import type { ChallengeWithProfiles } from "@/lib/types/database";
 import { Button } from "@/components/ui/Button";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 interface ChallengesListProps {
   challenges: ChallengeWithProfiles[];
   currentPlayerId: string | null;
-  onRefresh: () => void;
 }
 
-export function ChallengesList({ challenges, currentPlayerId, onRefresh }: ChallengesListProps) {
+export function ChallengesList({ challenges, currentPlayerId }: ChallengesListProps) {
+  const router = useRouter();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const handleAccept = async (challengeId: string) => {
@@ -22,7 +23,7 @@ export function ChallengesList({ challenges, currentPlayerId, onRefresh }: Chall
         .from("challenges")
         .update({ status: "accepted" })
         .eq("id", challengeId);
-      onRefresh();
+      router.refresh();
     } finally {
       setActionLoading(null);
     }
@@ -36,7 +37,7 @@ export function ChallengesList({ challenges, currentPlayerId, onRefresh }: Chall
         .from("challenges")
         .update({ status: "declined" })
         .eq("id", challengeId);
-      onRefresh();
+      router.refresh();
     } finally {
       setActionLoading(null);
     }

@@ -13,7 +13,6 @@ interface LadderTableProps {
   currentPlayerId: string | null;
   ladderId: string;
   isMember: boolean;
-  onRefresh: () => void;
 }
 
 export function LadderTable({
@@ -22,7 +21,6 @@ export function LadderTable({
   currentPlayerId,
   ladderId,
   isMember,
-  onRefresh,
 }: LadderTableProps) {
   const [challengeModalOpen, setChallengeModalOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
@@ -63,7 +61,7 @@ export function LadderTable({
         <h2 className="text-xl font-semibold text-white">Ladder Rankings</h2>
         <div className="flex items-center gap-2">
           {!isMember && currentPlayerId && (
-            <JoinLadderButton ladderId={ladderId} onJoined={onRefresh} />
+            <JoinLadderButton ladderId={ladderId} />
           )}
         </div>
       </div>
@@ -158,7 +156,6 @@ export function LadderTable({
           opponent={selectedOpponent}
           ladderId={ladderId}
           onClose={() => setChallengeModalOpen(false)}
-          onSuccess={onRefresh}
         />
       )}
       {reportModalOpen && selectedOpponent && (
@@ -166,7 +163,6 @@ export function LadderTable({
           opponent={selectedOpponent}
           ladderId={ladderId}
           onClose={() => setReportModalOpen(false)}
-          onSuccess={onRefresh}
         />
       )}
     </div>

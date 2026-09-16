@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { createClient } from "@/lib/supabase/client";
@@ -11,10 +12,10 @@ interface ChallengeModalProps {
   opponent: LadderStandingRow;
   ladderId: string;
   onClose: () => void;
-  onSuccess: () => void;
 }
 
-export function ChallengeModal({ opponent, ladderId, onClose, onSuccess }: ChallengeModalProps) {
+export function ChallengeModal({ opponent, ladderId, onClose }: ChallengeModalProps) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,7 +66,7 @@ export function ChallengeModal({ opponent, ladderId, onClose, onSuccess }: Chall
 
       if (insertError) throw insertError;
 
-      onSuccess();
+      router.refresh();
       onClose();
     } catch (err) {
       setError(toUserMessage(err));

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { createClient } from "@/lib/supabase/client";
@@ -11,10 +12,10 @@ interface ReportScoreModalProps {
   opponent: LadderStandingRow;
   ladderId: string;
   onClose: () => void;
-  onSuccess: () => void;
 }
 
-export function ReportScoreModal({ opponent, ladderId, onClose, onSuccess }: ReportScoreModalProps) {
+export function ReportScoreModal({ opponent, ladderId, onClose }: ReportScoreModalProps) {
+  const router = useRouter();
   const [score, setScore] = useState("");
   const [winner, setWinner] = useState<"me" | "opponent">("me");
   const [loading, setLoading] = useState(false);
@@ -66,7 +67,7 @@ export function ReportScoreModal({ opponent, ladderId, onClose, onSuccess }: Rep
 
       if (rpcError) throw rpcError;
 
-      onSuccess();
+      router.refresh();
       onClose();
     } catch (err) {
       setError(toUserMessage(err));

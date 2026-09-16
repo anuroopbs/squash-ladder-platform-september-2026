@@ -113,7 +113,7 @@ export default async function ClubHubPage({
                 You&apos;re one click away from joining this ladder.
               </p>
             </div>
-            <JoinLadderButton ladderId={primaryLadder.id} onJoined={async () => {}} />
+            <JoinLadderButton ladderId={primaryLadder.id} />
           </div>
         </div>
       )}
@@ -169,9 +169,6 @@ export default async function ClubHubPage({
               <ChallengesList
                 challenges={challenges}
                 currentPlayerId={currentPlayer.user.id}
-                onRefresh={async () => {
-                  "use server";
-                }}
               />
             </div>
           </div>
@@ -214,9 +211,6 @@ export default async function ClubHubPage({
           currentPlayerId={currentPlayer?.user?.id ?? null}
           ladderId={primaryLadder.id}
           isMember={playerLadderInfo !== null}
-          onRefresh={async () => {
-            "use server";
-          }}
         />
       </div>
 
