@@ -44,6 +44,13 @@ export function LadderTable({
     );
   };
 
+  const getChallengeLabel = (playerId: string) => {
+    const challenge = getActiveChallenge(playerId);
+    if (!challenge) return null;
+    if (challenge.challenger_id === currentPlayerId) return "Challenge Sent";
+    return "Challenged You";
+  };
+
   const currentPlayerRank = standings.find((s) => s.player_id === currentPlayerId)?.rank ?? 999;
 
   const handleChallenge = (opponent: LadderStandingRow) => {
@@ -110,28 +117,36 @@ export function LadderTable({
                         </span>
                       )}
                       {hasActiveChallenge && (
-                        <span className="shrink-0 rounded bg-yellow-500/20 px-1.5 py-0.5 text-xs text-yellow-300">
-                          In Challenge
+                        <span className="shrink-0 rounded bg-blue-500/20 px-1.5 py-0.5 text-xs font-medium text-blue-300">
+                          {getChallengeLabel(player.player_id)}
                         </span>
                       )}
                     </div>
                     <p className="text-xs text-white/40 mt-0.5">
                       Joined {new Date(player.joined_at).toLocaleDateString()}
                     </p>
+                    {isMember && player.phone && (
+                      <a
+                        href={`tel:${player.phone}`}
+                        className="mt-1 inline-flex items-center gap-1 text-xs text-court-300 hover:text-court-200"
+                      >
+                        📞 {player.phone}
+                      </a>
+                    )}
                   </div>
                 </div>
 
                 {/* Actions - mobile friendly */}
                 {currentPlayerId && player.player_id !== currentPlayerId && (
                   <div className="mt-3 flex items-center gap-2 flex-wrap">
-                    {canChallenge && (
+                    {canChallenge && !hasActiveChallenge && (
                       <Button
                         size="sm"
-                        variant="secondary"
+                        variant="challenge"
                         onClick={() => handleChallenge(player)}
                         className="flex-1 sm:flex-initial"
                       >
-                        Challenge
+                        ⚔️ Challenge
                       </Button>
                     )}
                     {isMember && (

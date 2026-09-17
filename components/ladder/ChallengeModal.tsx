@@ -18,6 +18,7 @@ export function ChallengeModal({ opponent, ladderId, onClose }: ChallengeModalPr
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -67,13 +68,34 @@ export function ChallengeModal({ opponent, ladderId, onClose }: ChallengeModalPr
       if (insertError) throw insertError;
 
       router.refresh();
-      onClose();
+      setSent(true);
     } catch (err) {
       setError(toUserMessage(err));
     } finally {
       setLoading(false);
     }
   };
+
+  if (sent) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#1a1b26] p-6 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/15 text-2xl ring-1 ring-inset ring-blue-500/30">
+            ⚔️
+          </div>
+          <h3 className="mt-4 text-lg font-semibold text-white">Challenge sent!</h3>
+          <p className="mt-2 text-sm text-white/60">
+            <span className="font-medium text-white">{opponent.display_name}</span> has been
+            notified. You&apos;ll see &ldquo;Challenge Sent&rdquo; next to their name until they
+            respond.
+          </p>
+          <Button onClick={onClose} className="mt-6 w-full">
+            Got it
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">

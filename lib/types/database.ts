@@ -19,6 +19,8 @@ export interface Profile {
   display_name: string;
   avatar_url: string | null;
   is_admin: boolean;
+  phone: string | null;
+  email: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -121,6 +123,7 @@ export interface LadderStandingRow {
   display_name: string;
   avatar_url: string | null;
   is_admin: boolean;
+  phone: string | null;
   joined_at: string;
   ladder_name: string;
   club_name: string;

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentPlayer } from "@/lib/queries/profile";
 import { getChallengesByPlayer } from "@/lib/queries/challenges";
 import { createClient } from "@/lib/supabase/server";
+import { AddPhoneNumber } from "@/components/profile/AddPhoneNumber";
 import Link from "next/link";
 
 export default async function ProfilePage() {
@@ -39,6 +40,11 @@ export default async function ProfilePage() {
           <p className="text-sm text-white/50">{player.user.email}</p>
         </div>
       </div>
+
+      {/* Phone number */}
+      <section className="mt-8">
+        <AddPhoneNumber currentPhone={player.profile?.phone ?? null} />
+      </section>
 
       {/* My Ladder Positions */}
       <section className="mt-10">
