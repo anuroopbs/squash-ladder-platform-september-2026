@@ -9,8 +9,17 @@ export async function getCities(): Promise<CityWithClubCount[]> {
     .order("name");
 
   if (error) throw error;
-  // The clubs(count) relation returns { count: number }[] — matches our type
-  return (data ?? []) as CityWithClubCount[];
+  const cities = (data ?? []) as CityWithClubCount[];
+
+  // Pin Secunderabad/Hyderabad first (user's home city), rest stay
+  // alphabetical. No manual sort_order column on cities yet -- if more
+  // pinned cities are needed later, add a sort_order int column instead
+  // of growing this list.
+  const pinnedSlug = "hyderabad";
+  return [
+    ...cities.filter((c) => c.slug === pinnedSlug),
+    ...cities.filter((c) => c.slug !== pinnedSlug),
+  ];
 }
 
 export async function getCityBySlug(citySlug: string) {
