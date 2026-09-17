@@ -40,8 +40,11 @@
 | 015 | `015_cleanup_stuck_challenges.sql` | **Fixes stuck challenges** — marks pending/accepted challenges as completed if a match was already played between the two players (root cause: ReportScoreModal wasn't passing challenge_uuid, fixed in app code). | ⏳ Needs manual apply |
 | 016 | `016_diagnostic_dublin_state.sql` | Read-only diagnostic — revealed 010 was never applied (Dublin Squash Open + Dublin Women Squash Association were still inside Mount Pleasant). | ℹ️ Diagnostic only |
 | 017 | `017_dublin_ladders_own_clubs.sql` | **Real fix for Dublin structure** — creates "Dublin Squash Open" and "Dublin Women Squash Association" as their own clubs directly under Dublin city, moves the two ladders out of Mount Pleasant into them, renames each ladder to "Ladder Ranking". Confirmed live on squashladder.in/dublin (4 clubs). | ✅ Applied |
-| 018 | `018_remove_players_p_karthik.sql` | Removes Aditya Verma (rank 1) + Raghu Tedt (rank 4) from P Karthik Squash Institute, keeps NAWiN + Anuroop B Sobha, re-ranks to close the gap. | ⏳ Needs manual apply |
+| 018 | `018_remove_players_p_karthik.sql` | Removes players from P Karthik Squash Institute — applied, then extended in a follow-up ad-hoc query to remove all 4 test players, leaving only NAWiN. Test matches also cleared. | ✅ Applied (superseded by later ad-hoc cleanup, ladder now has only NAWiN) |
 | 019 | `019_ladder_requests_SUPERSEDED.sql` | Was going to add a `ladder_requests` table + form for self-service requests — user decided against it, reverted to the existing Instagram-DM flow instead. Never applied. | ⚠️ Superseded, not applied |
+| 020 | `020_expose_phone_on_standings.sql` | Adds `phone` to `ladder_standings` view (member-only display in app code). | ✅ Applied |
+| 021 | `021_schedule_challenge_expiry.sql` | Schedules `expire_old_challenges()` via pg_cron, daily 3am UTC — was written in migration 002 but never actually called anywhere until now. | ✅ Applied |
+| 022 | `022_fix_rank_swap_security_definer.sql` | **Critical fix** — `swap_player_ranks()`/`report_match_and_swap()` were not `SECURITY DEFINER`, so the internal rank-swap UPDATE silently failed RLS for every non-admin player (only "admins can update ladder players" policy existed). Matches got recorded as confirmed but ranks never actually moved for regular players. Confirmed via live diagnostic (`prosecdef = false` on both functions) before fixing. | ⏳ Needs manual apply |
 
 ## Current known state of `profiles` table columns
 
