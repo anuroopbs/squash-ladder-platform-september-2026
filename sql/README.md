@@ -40,6 +40,8 @@
 | 015 | `015_cleanup_stuck_challenges.sql` | **Fixes stuck challenges** — marks pending/accepted challenges as completed if a match was already played between the two players (root cause: ReportScoreModal wasn't passing challenge_uuid, fixed in app code). | ⏳ Needs manual apply |
 | 016 | `016_diagnostic_dublin_state.sql` | Read-only diagnostic — revealed 010 was never applied (Dublin Squash Open + Dublin Women Squash Association were still inside Mount Pleasant). | ℹ️ Diagnostic only |
 | 017 | `017_dublin_ladders_own_clubs.sql` | **Real fix for Dublin structure** — creates "Dublin Squash Open" and "Dublin Women Squash Association" as their own clubs directly under Dublin city, moves the two ladders out of Mount Pleasant into them, renames each ladder to "Ladder Ranking". Confirmed live on squashladder.in/dublin (4 clubs). | ✅ Applied |
+| 018 | `018_remove_players_p_karthik.sql` | Removes Aditya Verma (rank 1) + Raghu Tedt (rank 4) from P Karthik Squash Institute, keeps NAWiN + Anuroop B Sobha, re-ranks to close the gap. | ⏳ Needs manual apply |
+| 019 | `019_ladder_requests_SUPERSEDED.sql` | Was going to add a `ladder_requests` table + form for self-service requests — user decided against it, reverted to the existing Instagram-DM flow instead. Never applied. | ⚠️ Superseded, not applied |
 
 ## Current known state of `profiles` table columns
 

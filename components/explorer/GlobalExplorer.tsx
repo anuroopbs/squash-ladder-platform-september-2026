@@ -4,12 +4,9 @@ import { useMemo, useState } from "react";
 import type { CityWithClubCount } from "@/lib/types/database";
 import { CitySearchBar } from "./CitySearchBar";
 import { CityCardGrid } from "./CityCardGrid";
-import { RequestLadderModal } from "./RequestLadderModal";
-import { Button } from "@/components/ui/Button";
 
 export function GlobalExplorer({ cities }: { cities: CityWithClubCount[] }) {
   const [query, setQuery] = useState("");
-  const [requestModalOpen, setRequestModalOpen] = useState(false);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -46,21 +43,17 @@ export function GlobalExplorer({ cities }: { cities: CityWithClubCount[] }) {
 
       <div className="mt-10 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
         <p className="text-sm text-white/50">
-          Don&apos;t see your city or club? Request a new ladder and we&apos;ll set it up for you.
+          Don&apos;t see your city or club? Message us and we&apos;ll set it up for you.
         </p>
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => setRequestModalOpen(true)}
-          className="mt-3"
+        <a
+          href="https://www.instagram.com/dublinsquashmentor/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-white/10 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/15"
         >
-          Request a New Ladder
-        </Button>
+          📩 Message us on Instagram @dublinsquashmentor
+        </a>
       </div>
-
-      {requestModalOpen && (
-        <RequestLadderModal onClose={() => setRequestModalOpen(false)} />
-      )}
     </div>
   );
 }
