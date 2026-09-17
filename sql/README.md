@@ -32,12 +32,14 @@
 | 007 | `007_complete_cleanup.sql` | Consolidated: phone column, Dublin ladders (original location), remove 17 Degrees North + Prestige Nirvana clubs | ✅ Applied |
 | 008 | `008_create_dublin_ladders_SUPERSEDED.sql` | Standalone Dublin ladder creation | ⚠️ Superseded — same INSERT also in 007 |
 | 009 | `009_final_cleanup.sql` | Final player cleanup pass (Dublin Mount Pleasant rank fixes, re-ranking) | ✅ Applied |
-| 010 | `010_move_dublin_ladders.sql` | Moves Dublin Squash Open + Dublin Women Squash Association from Mount Pleasant to a new dedicated "Dublin Squash" club | ✅ Applied |
+| 010 | `010_move_dublin_ladders.sql` | ⚠️ Written but **never actually applied** to production — superseded by 017, which discovered (via live diagnostic) that both ladders were still inside Mount Pleasant all along. | ⚠️ Superseded by 017, not applied |
 | 011 | `011_add_email_to_profiles.sql` | Adds `profiles.email` column, updates `handle_new_user()` trigger, backfills from `auth.users` | ✅ Applied |
 | 012 | `012_remove_specific_players.sql` | Removes 7 named test/demo players from all ladders and challenges | ✅ Applied |
 | 013 | `013_fix_race_conditions.sql` | Makes `unique(ladder_id, rank)` deferrable, rewrites `swap_player_ranks()` to swap directly instead of via a `-1` scratch value, explicit RPC grants | ✅ Applied |
 | 014 | `014_re_rank_all_ladders.sql` | **Re-ranks all ladders globally** — compacts rank sequences so there are no gaps left behind by player deletions. Idempotent, safe to re-run. | ⏳ Needs manual apply |
 | 015 | `015_cleanup_stuck_challenges.sql` | **Fixes stuck challenges** — marks pending/accepted challenges as completed if a match was already played between the two players (root cause: ReportScoreModal wasn't passing challenge_uuid, fixed in app code). | ⏳ Needs manual apply |
+| 016 | `016_diagnostic_dublin_state.sql` | Read-only diagnostic — revealed 010 was never applied (Dublin Squash Open + Dublin Women Squash Association were still inside Mount Pleasant). | ℹ️ Diagnostic only |
+| 017 | `017_dublin_ladders_own_clubs.sql` | **Real fix for Dublin structure** — creates "Dublin Squash Open" and "Dublin Women Squash Association" as their own clubs directly under Dublin city, moves the two ladders out of Mount Pleasant into them, renames each ladder to "Ladder Ranking". Confirmed live on squashladder.in/dublin (4 clubs). | ✅ Applied |
 
 ## Current known state of `profiles` table columns
 
