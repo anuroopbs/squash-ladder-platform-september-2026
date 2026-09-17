@@ -18,13 +18,13 @@ select
   p.display_name,
   p.avatar_url,
   p.is_admin,
-  p.phone,
   lp.joined_at,
   l.name as ladder_name,
   c.name as club_name,
   c.slug as club_slug,
   ci.name as city_name,
-  ci.slug as city_slug
+  ci.slug as city_slug,
+  p.phone
 from public.ladder_players lp
 join public.profiles p on p.id = lp.player_id
 join public.ladders l on l.id = lp.ladder_id
