@@ -79,6 +79,17 @@ export default async function HomePage() {
           Pick your city, pick your club, and see where you rank. Challenge
           players, report scores, and climb — wherever in the world you play.
         </p>
+        <p className="mt-4 text-sm text-white/45">
+          Need help getting started, or found something broken?{" "}
+          <a
+            href="https://www.instagram.com/dublinsquashmentor/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-court-300 hover:text-court-200"
+          >
+            📩 Message us @dublinsquashmentor
+          </a>
+        </p>
       </div>
 
       {/* Main Content: Explorer (left) + All Ladders (right) — 50/50 split */}
@@ -101,8 +112,24 @@ export default async function HomePage() {
       {/* Vision */}
       <VisionSection />
 
+      {/* Coaching mention — low-key, same handle as support */}
+      <div className="mt-10 flex items-center justify-center gap-2 text-xs text-white/35">
+        <span>🎾</span>
+        <span>
+          Want squash coaching?{" "}
+          <a
+            href="https://www.instagram.com/dublinsquashmentor/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white/55 hover:text-white/80"
+          >
+            DM @dublinsquashmentor
+          </a>
+        </span>
+      </div>
+
       {/* Footer */}
-      <footer className="mt-16 border-t border-white/10 pt-8 text-center">
+      <footer className="mt-6 border-t border-white/10 pt-8 text-center">
         <p className="text-sm text-white/40">
           Built with ❤️ for the squash community. Play fair, climb high, make
           friends.
