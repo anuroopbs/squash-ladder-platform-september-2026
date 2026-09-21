@@ -124,6 +124,7 @@ export interface LadderStandingRow {
   avatar_url: string | null;
   is_admin: boolean;
   phone: string | null;
+  email: string | null;
   joined_at: string;
   ladder_name: string;
   club_name: string;

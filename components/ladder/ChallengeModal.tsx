@@ -67,6 +67,27 @@ export function ChallengeModal({ opponent, ladderId, onClose }: ChallengeModalPr
 
       if (insertError) throw insertError;
 
+      // Fire-and-forget email notification -- never blocks or fails the
+      // challenge itself if the email doesn't send (see route for why).
+      const challengerName =
+        (await supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle())
+          .data?.display_name ?? "A player";
+      if (opponent.email) {
+        fetch("/api/notify/challenge", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: opponent.email,
+            challengerName,
+            challengedName: opponent.display_name,
+            clubName: opponent.club_name,
+            ladderUrl: `https://squashladder.in/${opponent.city_slug}/${opponent.club_slug}`,
+          }),
+        }).catch(() => {
+          // Silently ignore -- notification is best-effort, not critical path.
+        });
+      }
+
       router.refresh();
       setSent(true);
     } catch (err) {
