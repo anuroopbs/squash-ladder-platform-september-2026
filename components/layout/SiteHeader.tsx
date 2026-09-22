@@ -13,6 +13,14 @@ export async function SiteHeader() {
 
       {player ? (
         <div className="flex items-center gap-3 sm:gap-4">
+          {player.profile?.is_admin && (
+            <Link
+              href="/admin"
+              className="text-sm text-white/60 transition hover:text-white"
+            >
+              🛠️ Admin
+            </Link>
+          )}
           <Link
             href="/profile"
             className="text-sm text-white/60 transition hover:text-white"
