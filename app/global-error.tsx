@@ -1,5 +1,7 @@
 "use client";
 
+import { isChunkLoadError } from "@/lib/isChunkLoadError";
+
 export default function GlobalError({
   error,
   reset,
@@ -7,20 +9,24 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const isStaleChunk = isChunkLoadError(error);
+
   return (
     <html lang="en">
       <body className="min-h-screen bg-[#0b0f0d] font-sans text-white antialiased">
         <main className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center px-6 text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10 text-3xl">
-            ⚠️
+            {isStaleChunk ? "🔄" : "⚠️"}
           </div>
           <h1 className="mt-6 text-2xl font-bold text-white">
-            Something went wrong
+            {isStaleChunk ? "We've updated the site" : "Something went wrong"}
           </h1>
           <p className="mt-2 text-white/50">
-            {error.message || "An unexpected error occurred. Please try again."}
+            {isStaleChunk
+              ? "Tap refresh to load the latest version."
+              : error.message || "An unexpected error occurred. Please try again."}
           </p>
-          {error.digest && (
+          {!isStaleChunk && error.digest && (
             <p className="mt-2 text-xs text-white/30">Error code: {error.digest}</p>
           )}
           <div className="mt-6 flex items-center gap-3">
@@ -30,12 +36,25 @@ export default function GlobalError({
             >
               ← Back to all cities
             </a>
-            <button
-              onClick={reset}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/[0.08]"
-            >
-              Try again
-            </button>
+            {isStaleChunk ? (
+              // A stale chunk means the JS this tab already has can't
+              // ever succeed -- "Try again" would just re-run the same
+              // broken code. A full reload re-fetches the current
+              // index.html and its up-to-date chunk manifest instead.
+              <button
+                onClick={() => window.location.reload()}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/[0.08]"
+              >
+                Tap to refresh
+              </button>
+            ) : (
+              <button
+                onClick={reset}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/[0.08]"
+              >
+                Try again
+              </button>
+            )}
           </div>
         </main>
       </body>
