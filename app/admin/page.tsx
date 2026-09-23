@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { getCurrentPlayer } from "@/lib/queries/profile";
-import { getAllLaddersWithPlayers } from "@/lib/queries/admin";
+import { getAllLaddersWithPlayers, getDisputedMatches } from "@/lib/queries/admin";
 import { AdminLadderPanel } from "@/components/admin/AdminLadderPanel";
+import { DisputeQueuePanel } from "@/components/admin/DisputeQueuePanel";
 
 // Server-gated admin dashboard. Redirects anyone who isn't signed in AND
 // is_admin=true straight back to the home page — no admin-only content is
@@ -14,7 +15,10 @@ export default async function AdminPage() {
   if (!player?.user) redirect("/login");
   if (!player.profile?.is_admin) redirect("/");
 
-  const ladders = await getAllLaddersWithPlayers();
+  const [ladders, disputes] = await Promise.all([
+    getAllLaddersWithPlayers(),
+    getDisputedMatches(player.user.id),
+  ]);
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-12 sm:py-16">
@@ -30,7 +34,20 @@ export default async function AdminPage() {
         </div>
       </div>
 
+      {disputes.length > 0 && (
+        <div className="mt-10">
+          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-500/20 text-xs text-red-300">
+              {disputes.length}
+            </span>
+            Disputed matches — need your review
+          </h2>
+          <DisputeQueuePanel initialDisputes={disputes} adminId={player.user.id} />
+        </div>
+      )}
+
       <div className="mt-10">
+        <h2 className="mb-4 text-lg font-semibold text-white">All ladders</h2>
         <AdminLadderPanel initialLadders={ladders} />
       </div>
     </main>

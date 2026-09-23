@@ -74,3 +74,33 @@ export async function updatePlayerRank(ladderId: string, playerId: string, newRa
 
   if (error) throw error;
 }
+
+export interface DisputedMatchRow {
+  match_id: string;
+  ladder_id: string;
+  player1_id: string;
+  player2_id: string;
+  winner_id: string;
+  score: string;
+  reported_by: string;
+  played_at: string;
+  updated_at: string;
+  player1_name: string;
+  player2_name: string;
+  reported_by_name: string;
+  ladder_name: string;
+  club_name: string;
+  club_slug: string;
+  city_name: string;
+  city_slug: string;
+}
+
+/** Every match currently awaiting admin resolution (status = 'disputed'). */
+export async function getDisputedMatches(adminId: string): Promise<DisputedMatchRow[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("get_disputed_matches", {
+    admin_uuid: adminId,
+  });
+  if (error) throw error;
+  return (data ?? []) as DisputedMatchRow[];
+}
