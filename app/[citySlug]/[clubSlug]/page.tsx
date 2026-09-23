@@ -14,6 +14,7 @@ import { JoinLadderButton } from "@/components/ladder/JoinLadderButton";
 import { QRCodeCard } from "@/components/ladder/QRCodeCard";
 import { SupportContact } from "@/components/ui/SupportContact";
 import { CreateLadderButtonForClub } from "@/components/ladder/CreateLadderButtonForClub";
+import { BackButton } from "@/components/ui/BackButton";
 
 export const revalidate = 60;
 
@@ -96,6 +97,9 @@ export default async function ClubHubPage({
           city={{ slug: club.cities.slug, name: club.cities.name }}
           club={{ slug: club.slug, name: club.name }}
         />
+        <div className="mt-3">
+          <BackButton href={`/${club.cities.slug}`} label={`Back to ${club.cities.name}`} />
+        </div>
         <h1 className="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl">
           {club.name}
         </h1>
@@ -153,6 +157,9 @@ export default async function ClubHubPage({
         city={{ slug: club.cities.slug, name: club.cities.name }}
         club={{ slug: club.slug, name: club.name }}
       />
+      <div className="mt-3">
+        <BackButton href={`/${club.cities.slug}`} label={`Back to ${club.cities.name}`} />
+      </div>
 
       {/* Club Header */}
       <div className="mt-6 flex items-start justify-between gap-4">

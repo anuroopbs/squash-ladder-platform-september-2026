@@ -5,6 +5,7 @@ import { getClubsByCitySlug } from "@/lib/queries/clubs";
 import { Breadcrumbs } from "@/components/location/Breadcrumbs";
 import { ClubCardGrid } from "@/components/location/ClubCardGrid";
 import { CreateLadderButtonForCity } from "@/components/ladder/CreateLadderButtonForCity";
+import { BackButton } from "@/components/ui/BackButton";
 
 export const revalidate = 60;
 
@@ -75,6 +76,9 @@ export default async function CityPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <Breadcrumbs city={city} />
+      <div className="mt-3">
+        <BackButton href="/" label="All cities" />
+      </div>
 
       <div className="mt-6 flex items-end justify-between gap-4">
         <div>
