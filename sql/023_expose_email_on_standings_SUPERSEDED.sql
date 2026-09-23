@@ -1,0 +1,16 @@
+-- ============================================================================
+-- Migration 023: Expose email on ladder_standings — SUPERSEDED, do NOT apply
+-- ============================================================================
+-- Original intent: add profiles.email to the public ladder_standings view so
+-- ChallengeModal/ReportScoreModal could pass the opponent's email to
+-- /api/notify/*. This file was never applied to production.
+--
+-- 2026-09-23: it was briefly applied and then rolled back the same session,
+-- because exposing email in a view readable by the anon key would let anyone
+-- on the internet download every ladder player's email address. Instead the
+-- notify routes now look up the recipient server-side with the service-role
+-- key (see lib/notify.ts, app/api/notify/*), and the client only sends the
+-- opponent's player id. Current live view = 020 (phone, no email).
+--
+-- Kept only as history. Nothing to run.
+-- ============================================================================

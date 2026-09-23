@@ -1,77 +1,80 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import {
+  createAdminClient,
+  emailLayout,
+  escapeHtml,
+  NOTIFY_WINDOW_MS,
+  sendEmail,
+  SITE_URL,
+} from "@/lib/notify";
 
-// Sends a "a score was reported against you, please confirm" transactional
-// email via Resend. Called client-side from ReportScoreModal right after a
-// pending_confirmation match is successfully inserted. Never blocks the
-// score submission itself -- email is best-effort, same pattern as
-// /api/notify/challenge.
+// "A score was reported, please confirm" email. Called (fire-and-forget) by
+// ReportScoreModal right after report_match() succeeds.
 //
-// Requires RESEND_API_KEY set in Vercel project env vars. If it's not
-// set, this route no-ops with a 200.
+// Body: { opponentId }. The caller must be signed in and must have reported a
+// pending_confirmation match against opponentId in the last 10 minutes. Score,
+// winner, names and email all come from the database, never from the client.
 export async function POST(request: NextRequest) {
   try {
-    const { to, reporterName, opponentName, score, winnerName, clubName, ladderUrl } =
-      await request.json();
-
-    if (!to || !reporterName || !opponentName || !score) {
-      return NextResponse.json(
-        { skipped: true, reason: "missing required fields" },
-        { status: 200 }
-      );
+    const { opponentId } = await request.json().catch(() => ({}));
+    if (typeof opponentId !== "string") {
+      return NextResponse.json({ skipped: true, reason: "missing opponentId" });
     }
 
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { skipped: true, reason: "RESEND_API_KEY not set" },
-        { status: 200 }
-      );
-    }
+    const {
+      data: { user },
+    } = await createClient().auth.getUser();
+    if (!user) return NextResponse.json({ skipped: true, reason: "not signed in" }, { status: 401 });
 
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        from: "Squash Ladder <notifications@squashladder.in>",
-        to: [to],
-        subject: `🏆 ${reporterName} reported a match result — please confirm`,
-        html: `
-          <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
-            <h2 style="color: #1a1b26;">Match result reported 🏆</h2>
-            <p><strong>${reporterName}</strong> reported a result for your match on the
-            <strong>${clubName ?? "ladder"}</strong> ranking:</p>
-            <p style="font-size: 18px; font-weight: 600; margin: 16px 0;">
-              ${winnerName} won ${score}
-            </p>
-            <p>If this is correct, confirm it to lock in the rank change. If it's
-            wrong, you can dispute it instead. Unconfirmed results auto-confirm
-            after 48 hours.</p>
-            <a href="${ladderUrl ?? "https://squashladder.in"}"
-               style="display: inline-block; margin-top: 16px; padding: 12px 24px;
-                      background: #38a473; color: white; border-radius: 8px;
-                      text-decoration: none; font-weight: 600;">
-              Confirm or dispute →
-            </a>
-            <p style="margin-top: 24px; font-size: 12px; color: #888;">
-              Squash Ladder — squashladder.in
-            </p>
-          </div>
-        `,
-      }),
-    });
+    const admin = createAdminClient();
+    if (!admin) return NextResponse.json({ skipped: true, reason: "service key not set" });
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error("Resend API error:", errText);
-      return NextResponse.json({ sent: false, error: errText }, { status: 200 });
-    }
+    const since = new Date(Date.now() - NOTIFY_WINDOW_MS).toISOString();
+    const { data: match } = await admin
+      .from("matches")
+      .select("id, score, winner_id, player1_id, player2_id, ladders(clubs(name, slug, cities(slug)))")
+      .eq("reported_by", user.id)
+      .eq("status", "pending_confirmation")
+      .or(`player1_id.eq.${opponentId},player2_id.eq.${opponentId}`)
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!match) return NextResponse.json({ skipped: true, reason: "no recent match" });
 
-    return NextResponse.json({ sent: true });
+    const { data: people } = await admin
+      .from("profiles")
+      .select("id, display_name, email")
+      .in("id", [user.id, opponentId]);
+    const reporter = people?.find((p) => p.id === user.id);
+    const opponent = people?.find((p) => p.id === opponentId);
+    if (!opponent?.email) return NextResponse.json({ skipped: true, reason: "opponent has no email" });
+
+    const winner = people?.find((p) => p.id === match.winner_id);
+    const club = (match as any).ladders?.clubs;
+    const ladderUrl = club?.cities?.slug ? `${SITE_URL}/${club.cities.slug}/${club.slug}` : SITE_URL;
+    const reporterName = escapeHtml(reporter?.display_name ?? "A player");
+
+    const result = await sendEmail(
+      opponent.email,
+      `${reporter?.display_name ?? "A player"} reported a match result, please confirm`,
+      emailLayout(
+        "Match result reported 🏆",
+        `<p><strong>${reporterName}</strong> reported a result for your match on the
+         <strong>${escapeHtml(club?.name ?? "ladder")}</strong> ranking:</p>
+         <p style="font-size: 18px; font-weight: 600; margin: 16px 0;">
+           ${escapeHtml(winner?.display_name ?? "")} won ${escapeHtml(match.score ?? "")}
+         </p>
+         <p>If this is correct, confirm it to lock in the rank change. If it's
+         wrong, you can dispute it. Unconfirmed results auto-confirm after 48 hours.</p>`,
+        ladderUrl,
+        "Confirm or dispute →"
+      )
+    );
+    return NextResponse.json(result);
   } catch (err) {
-    console.error("Failed to send score-reported notification:", err);
-    return NextResponse.json({ sent: false, error: String(err) }, { status: 200 });
+    console.error("score-reported notification failed:", err);
+    return NextResponse.json({ sent: false, reason: "error" });
   }
 }

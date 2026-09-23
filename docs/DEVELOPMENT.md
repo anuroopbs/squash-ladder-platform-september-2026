@@ -41,6 +41,26 @@
 - **Hermes cron** `squash-ladder-expiry-reminder` runs at 09:00 IST daily and
   POSTs to `/api/notify/expiry-reminder`. Returned `{"sent":0}` on its test run.
 
+### 2026-09-23 (later): notification fix + security hardening
+- Challenge/score emails were never sent: the client only called the notify
+  route when `opponent.email` was set, and it never was. Applying sql/023 would
+  have fixed that but published every player's email through a public view.
+  It was applied, spotted, and rolled back within minutes (the view is back to
+  the 020 version, verified via API, club pages 200).
+- Real fix: the browser sends only `{ opponentId }`. `/api/notify/challenge` and
+  `/api/notify/score-reported` now require a signed‑in user and a matching
+  challenge/match from the last 10 minutes, then read the email, names and score
+  on the server with the service‑role key. This also closes an open relay: the
+  old routes emailed any address in the request body, with no login needed.
+- All user text in the emails is HTML‑escaped (`lib/notify.ts`, with tests).
+- Expiry reminder: `reminder_sent_at` is now set only after a successful send.
+- Still open: Resend shows `squashladder.in` as **Pending**, even though all 4
+  DNS records resolve correctly on public DNS (checked with 8.8.8.8). The
+  Resend API key in Vercel is a hidden secret, so the agent can't query
+  Resend's API. The fix is to click "Verify" / "Restart" on the domain in
+  the Resend dashboard. Emails will not deliver until then.
+- Still open: `profiles.email`/`phone` readable by anon key (see AGENTS.md).
+
 ### Found during the 2026-09-23 documentation audit
 - **sql/023 was never applied.** `ladder_standings.email` does not exist in the
   live DB, so challenge and score-reported emails are never sent (the client

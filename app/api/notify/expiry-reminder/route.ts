@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { emailLayout, escapeHtml, sendEmail, SITE_URL } from "@/lib/notify";
 
 // Daily job: finds challenges created 5+ days ago (2 days before the 7-day
 // expiry) that are still pending/accepted and haven't had a reminder sent
@@ -43,59 +44,44 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ sent: 0 });
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
   let sentCount = 0;
 
   for (const c of challenges as any[]) {
     const challenger = c.challenger;
     const challenged = c.challenged;
+    const recipients = [
+      { email: challenger?.email, otherName: challenged?.display_name ?? "your opponent" },
+      { email: challenged?.email, otherName: challenger?.display_name ?? "your opponent" },
+    ].filter((r) => r.email);
 
-    if (apiKey) {
-      const recipients = [
-        { email: challenger?.email, otherName: challenged?.display_name },
-        { email: challenged?.email, otherName: challenger?.display_name },
-      ].filter((r) => r.email);
-
-      for (const r of recipients) {
-        await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            from: "Squash Ladder <notifications@squashladder.in>",
-            to: [r.email],
-            subject: `⏰ Your challenge vs ${r.otherName} expires in 2 days`,
-            html: `
-              <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
-                <h2 style="color: #1a1b26;">Challenge expiring soon ⏰</h2>
-                <p>Your challenge against <strong>${r.otherName}</strong> was
-                sent 5 days ago and will automatically expire in 2 days if
-                the match isn't reported.</p>
-                <a href="https://squashladder.in"
-                   style="display: inline-block; margin-top: 16px; padding: 12px 24px;
-                          background: #38a473; color: white; border-radius: 8px;
-                          text-decoration: none; font-weight: 600;">
-                  Report the score →
-                </a>
-                <p style="margin-top: 24px; font-size: 12px; color: #888;">
-                  Squash Ladder — squashladder.in
-                </p>
-              </div>
-            `,
-          }),
-        }).catch((err) => console.error("Resend send failed:", err));
-      }
+    let anySent = false;
+    for (const r of recipients) {
+      const name = escapeHtml(r.otherName);
+      const result = await sendEmail(
+        r.email,
+        `⏰ Your challenge vs ${r.otherName} expires in 2 days`,
+        emailLayout(
+          "Challenge expiring soon ⏰",
+          `<p>Your challenge against <strong>${name}</strong> was sent 5 days ago
+           and will expire in 2 days if the match isn't reported.</p>`,
+          SITE_URL,
+          "Report the score →"
+        )
+      );
+      if (result.sent) anySent = true;
     }
 
-    await supabase
-      .from("challenges")
-      .update({ reminder_sent_at: new Date().toISOString() })
-      .eq("id", c.id);
-
-    sentCount++;
+    // Only mark as reminded once an email actually went out. Before
+    // 2026-09-23 this was set even when Resend rejected the send (e.g. domain
+    // not verified yet), so those reminders were silently lost forever.
+    if (anySent) {
+      await supabase
+        .from("challenges")
+        .update({ reminder_sent_at: new Date().toISOString() })
+        .eq("id", c.id);
+      sentCount++;
+    }
   }
 
-  return NextResponse.json({ sent: sentCount });
+  return NextResponse.json({ sent: sentCount, candidates: challenges.length });
 }

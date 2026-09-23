@@ -84,29 +84,15 @@ export function ReportScoreModal({ opponent, ladderId, onClose }: ReportScoreMod
       if (rpcError) throw rpcError;
 
       // Fire-and-forget email to the opponent asking them to confirm the
-      // result -- never blocks the report itself. Same best-effort
-      // pattern as the challenge notification.
-      if (opponent.email) {
-        const reporterName =
-          (await supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle())
-            .data?.display_name ?? "A player";
-        const winnerName = winner === "me" ? reporterName : opponent.display_name;
-        fetch("/api/notify/score-reported", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            to: opponent.email,
-            reporterName,
-            opponentName: opponent.display_name,
-            score,
-            winnerName,
-            clubName: opponent.club_name,
-            ladderUrl: `https://squashladder.in/${opponent.city_slug}/${opponent.club_slug}`,
-          }),
-        }).catch(() => {
-          // Silently ignore -- notification is best-effort, not critical path.
-        });
-      }
+      // result -- never blocks the report itself. The server reads the
+      // score/winner/email from the database; we only send the opponent's id.
+      fetch("/api/notify/score-reported", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ opponentId: opponent.player_id }),
+      }).catch(() => {
+        // Silently ignore -- notification is best-effort, not critical path.
+      });
 
       router.refresh();
       onClose();

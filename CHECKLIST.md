@@ -25,7 +25,7 @@
 |---|---|---|---|---|
 | 1.1 | Production build compiles | `npm run build` | ✅ | 2026-09-23 |
 | 1.2 | Lint is clean | `npx next lint --max-warnings 0` | ✅ | 2026-09-23 |
-| 1.3 | Test suite passes | `npm test` | ✅ (23 pass, 2 skip) | 2026-09-23 |
+| 1.3 | Test suite passes | `npm test` | ✅ (25 pass, 2 skip) | 2026-09-23 |
 
 ## 2. Progressive Web App (PWA)
 
@@ -61,7 +61,9 @@
 |---|---|---|---|---|
 | 4a.1 | Phone OTP (Twilio via Supabase) sends a real SMS | Register with a real number | ✅ | 2026-09-22 |
 | 4a.2 | Resend domain `squashladder.in` verified | resend.com/domains shows Verified | ❌ Pending | 2026-09-23 |
-| 4a.3 | `ladder_standings.email` exists (needed for challenge/score emails) | `GET /rest/v1/ladder_standings?select=email&limit=0` | ❌ Missing, sql/023 not applied | 2026-09-23 |
+| 4a.3 | Notify routes reject unauthenticated calls | `POST /api/notify/challenge` without a session → 401 | ✅ | 2026-09-23 |
+| 4a.3b | `ladder_standings` does NOT expose email | `GET /rest/v1/ladder_standings?select=email` → 42703 | ✅ | 2026-09-23 |
+| 4a.3c | `profiles` email/phone NOT readable with anon key | `GET /rest/v1/profiles?select=email` | ❌ Readable (open issue) | 2026-09-23 |
 | 4a.4 | Daily expiry-reminder cron runs | Hermes cron `squash-ladder-expiry-reminder`, last_status ok | ✅ | 2026-09-23 |
 
 ## 5. Documentation (this is itself part of the checklist — meta-check)

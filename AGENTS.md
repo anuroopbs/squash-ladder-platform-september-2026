@@ -78,11 +78,16 @@ Next.js 14 (App Router) + Tailwind CSS + Supabase (Postgres + Auth).
     `challenges.reminder_sent_at` (sql/024).
   - Vercel production env vars set: `RESEND_API_KEY`, `CRON_SECRET`,
     `SUPABASE_SERVICE_ROLE_KEY`, plus the two public Supabase vars.
-  - ⚠️ **Challenge and score emails are never triggered (found 2026-09-23)**:
-    migration 023 (email on `ladder_standings`) was never applied, so
-    `opponent.email` is always empty and the notify routes are never called.
-    The daily reminder is not affected because it reads emails with the service
-    role key.
+  - **How the notify routes are secured (2026-09-23)**: the browser sends only
+    `{ opponentId }`. The route checks that the signed‑in caller created a
+    matching challenge or match in the last 10 minutes, then looks up the email,
+    names and score on the server with the service‑role key (`lib/notify.ts`).
+    Before this change the routes would email any address passed to them (an open
+    relay), and the caller never had the email because `ladder_standings` has no
+    email column. Email must **never** be added to that public view (see sql/023).
+  - The expiry reminder now sets `reminder_sent_at` only when an email was
+    actually sent. Before, a failed send (e.g. Resend domain not verified) was
+    still marked as sent, so the reminder was lost.
   - ⚠️ **Resend domain still Pending**: the Resend dashboard shows
     `squashladder.in` as **Pending** (checked 2026-09-23). The 4 DNS records
     (DKIM `resend._domainkey`, MX + SPF on `send`, DMARC `_dmarc`) were added in
@@ -112,6 +117,11 @@ Next.js 14 (App Router) + Tailwind CSS + Supabase (Postgres + Auth).
 - **Email/phone visibility**: `profiles.phone` and `profiles.email` exist.
   Phone is NULL for users who signed up before phone capture; email was
   backfilled from `auth.users` (sql/011).
+- **Privacy: `profiles` is readable with the public anon key**, including
+  `email` and `phone` (checked 2026-09-23: 30 rows, 28 emails). This comes from
+  the original `001_schema.sql` read policy. It should be locked down (e.g.
+  move email/phone into a private table or a column‑level grant) without
+  breaking the joins in `lib/queries/*` that read `display_name`.
 - **Some `as any` / `as unknown as` casts** remain in older query files —
   flagged but not all cleaned up
 - **Notifications are email only** — no SMS/push yet. Players who signed up
