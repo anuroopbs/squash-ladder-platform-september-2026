@@ -11,6 +11,47 @@
 
 ---
 
+## 🗓️ 2026-09-17 → 2026-09-23 — Sessions 4–8 (consolidated catch-up entry)
+
+> This log had no entries after 2026-09-16 even though a lot shipped. This
+> entry was rebuilt on 2026-09-23 from `git log`, the code and the session
+> history. The individual commit messages have the full detail.
+
+### Shipped (in order)
+| Date | Commit | What |
+|---|---|---|
+| 09-17 | `2d22ba7` | Critical fix: rank swap silently failed for non-admins (sql/022 SECURITY DEFINER) |
+| 09-17 | `dad6997`, `b024fab` | pg_cron daily challenge expiry (sql/021), phone on standings (sql/020) |
+| 09-18–20 | `edd6205`, `a338c4d`, `d38325e` | Challenge UX overhaul, Hyderabad pinned first, "Request a ladder" reverted to Instagram DM |
+| 09-21 | `3c60337` | Email notifications via Resend: challenge received + daily 48h expiry reminder |
+| 09-21 | `b0fc32f`, `52277f5` | Home page queries run in parallel; support/coaching promo moved higher |
+| 09-22 | `8f3784b` | Admin panel: remove/move players on any ladder (sql/025) |
+| 09-23 | `2c8f18b` | Opponent must confirm a result before ranks swap, auto-confirm after 48h, self-service Create a Ladder (sql/026, 027) |
+| 09-23 | `c106586` | Deterministic date format (fixes hydration errors #425/#422) |
+| 09-23 | `106c3ab` | Score dispute → admin queue (sql/028) |
+| 09-23 | `fc9c3c8` | SEO meta titles + SportsOrganization schema. **Tagged `milestone-2/3-2026-09-23`** |
+| 09-23 | `4695f54`…`2e64ddb` | Back buttons, bigger breadcrumbs, chunk-error auto-reload, "9 Sep 2026" dates, trophy icons, signup cleanup, simpler homepage, richer rankings, coaching bar, empty ladders shown again |
+
+### Infrastructure set up in this period
+- **Twilio + Supabase Phone OTP**: live, a real SMS test passed on 2026-09-22.
+- **Resend**: API key in Vercel. DNS records for `squashladder.in` added in
+  Vercel DNS (Vercel is the DNS host, GoDaddy is only the registrar). The domain
+  still shows **Pending** in Resend as of 2026-09-23.
+- **Vercel env vars**: `RESEND_API_KEY`, `CRON_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`.
+- **Hermes cron** `squash-ladder-expiry-reminder` runs at 09:00 IST daily and
+  POSTs to `/api/notify/expiry-reminder`. Returned `{"sent":0}` on its test run.
+
+### Found during the 2026-09-23 documentation audit
+- **sql/023 was never applied.** `ladder_standings.email` does not exist in the
+  live DB, so challenge and score-reported emails are never sent (the client
+  only calls the notify route when `opponent.email` is set).
+- AGENTS.md, CHECKLIST.md, README.md and sql/README.md were all out of date
+  (they said "no admin panel" and "no notifications", and the migration table
+  stopped at 022). All four were corrected.
+- Build ✅, lint ✅, tests 23 pass / 2 skip ✅, PWA assets on prod all 200 ✅.
+
+---
+
 ## 🗓️ 2026-09-16 — Session 3: PWA Audit + Standing Checklist System
 
 ### What Happened This Session

@@ -25,28 +25,35 @@ and fill in your own values.
 
 ```
 app/
-  page.tsx                       Global Explorer (city search + cards)
-  [citySlug]/page.tsx            City page (club cards)
-  [citySlug]/[clubSlug]/page.tsx Club Hub (stub — ladder table comes next)
-  not-found.tsx
-  layout.tsx, globals.css
+  page.tsx                        Home: search (cities + clubs) → city cards
+  [citySlug]/page.tsx             City page (club cards, back button)
+  [citySlug]/[clubSlug]/page.tsx  Club Hub: ladder, challenges, scores, QR
+  admin/page.tsx                  Admin dashboard (is_admin only)
+  profile/page.tsx                Player dashboard
+  login/, register/               Phone OTP (default) + email/password
+  api/notify/*                    Resend email routes (challenge, score, reminder)
+  error.tsx, global-error.tsx, not-found.tsx
 
 components/
-  explorer/                      GlobalExplorer, CitySearchBar, CityCardGrid, CityCard
-  location/                      Breadcrumbs, ClubCardGrid, ClubCard
-  ui/                             Badge, EmptyState
+  admin/      AdminLadderPanel, DisputeQueuePanel
+  auth/       LoginForm, RegisterForm, AuthCard, SignOutButton
+  explorer/   GlobalExplorer, CitySearchBar, CityCard(Grid), ClubSearchResultCard
+  home/       CoachingAnnouncementBar, HowItWorks, VisionSection
+  ladder/     LadderTable, ChallengeModal, ReportScoreModal, MatchHistory,
+              ChallengesList, JoinLadderButton, CreateLadder*, QRCodeCard
+  layout/     SiteHeader
+  location/   Breadcrumbs, ClubCard(Grid)
+  profile/    AddPhoneNumber
+  ui/         Button, Input, Badge, BackButton, EmptyState, Skeleton,
+              SupportContact, PWAInstaller, ScrollToTop
 
 lib/
-  supabase/client.ts             Browser Supabase client
-  supabase/server.ts             Server Component Supabase client
-  queries/cities.ts, clubs.ts    Data-fetching functions (Server Components call these directly)
-  types/database.ts              Hand-written types mirroring sql/schema.sql
-  slugify.ts
+  supabase/   browser, server and middleware clients
+  queries/    data access (cities, clubs, ladders, challenges, admin, ...)
+  formatDate.ts, isChunkLoadError.ts, errors.ts, slugify.ts (+ *.test.ts)
 
-sql/
-  schema.sql                     Full Postgres schema (tables, RLS, the
-                                  ladder_standings view) — already applied
-                                  to the live Supabase project.
+sql/          Numbered migration log 001–028. Read sql/README.md first.
+docs/         DEVELOPMENT.md (session log), domain setup notes
 ```
 
 ## Data flow

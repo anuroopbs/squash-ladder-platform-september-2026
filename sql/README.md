@@ -44,7 +44,28 @@
 | 019 | `019_ladder_requests_SUPERSEDED.sql` | Was going to add a `ladder_requests` table + form for self-service requests — user decided against it, reverted to the existing Instagram-DM flow instead. Never applied. | ⚠️ Superseded, not applied |
 | 020 | `020_expose_phone_on_standings.sql` | Adds `phone` to `ladder_standings` view (member-only display in app code). | ✅ Applied |
 | 021 | `021_schedule_challenge_expiry.sql` | Schedules `expire_old_challenges()` via pg_cron, daily 3am UTC — was written in migration 002 but never actually called anywhere until now. | ✅ Applied |
-| 022 | `022_fix_rank_swap_security_definer.sql` | **Critical fix** — `swap_player_ranks()`/`report_match_and_swap()` were not `SECURITY DEFINER`, so the internal rank-swap UPDATE silently failed RLS for every non-admin player (only "admins can update ladder players" policy existed). Matches got recorded as confirmed but ranks never actually moved for regular players. Confirmed via live diagnostic (`prosecdef = false` on both functions) before fixing. | ⏳ Needs manual apply |
+| 022 | `022_fix_rank_swap_security_definer.sql` | **Critical fix** — `swap_player_ranks()`/`report_match_and_swap()` were not `SECURITY DEFINER`, so the internal rank-swap UPDATE silently failed RLS for every non-admin player (only "admins can update ladder players" policy existed). Matches got recorded as confirmed but ranks never actually moved for regular players. Confirmed via live diagnostic (`prosecdef = false` on both functions) before fixing. | ✅ Applied (user ran it and confirmed, 2026-09-17) |
+| 023 | `023_expose_email_on_standings.sql` | Adds `email` to the `ladder_standings` view so the app can email a challenged player. | ❌ **NOT applied**. Live API check on 2026-09-23 returned `column ladder_standings.email does not exist`. Because of this, `ChallengeModal`/`ReportScoreModal` never get an opponent email and never call the notify routes. |
+| 024 | `024_challenge_reminder_tracking.sql` | Adds `challenges.reminder_sent_at` so the daily "48 hours left" email is sent only once per challenge. | ✅ Applied (column readable via API, 2026-09-23) |
+| 025 | `025_admin_panel_setup.sql` | Makes Anuroop's account admin (`is_admin = true`) and adds the missing "admins can delete ladder players" RLS policy. | ✅ Applied (admin panel in use) |
+| 026 | `026_match_confirmation_flow.sql` | Splits reporting from rank swapping: `report_match()` only records the result, and ranks swap when the opponent confirms (`confirm_match_and_swap()`). Adds `dispute_match()`, plus `auto_confirm_stale_matches()` (pg_cron) to auto-confirm undisputed results after 48h. Replaces `report_match_and_swap()`. | ✅ Applied (functions answer via API, 2026-09-23) |
+| 027 | `027_create_ladder_flow.sql` | `slugify()` + `create_ladder_full()`, one atomic SECURITY DEFINER function behind the self-service "Create a Ladder" flow. | ✅ Applied (`create_ladder_full` exists via API, 2026-09-23) |
+| 028 | `028_dispute_resolution_queue.sql` | Admin dispute queue: `get_disputed_matches()` + `resolve_disputed_match()` (confirm with a final winner/score, or void and reopen the challenge). | ✅ Applied (both functions answer "Only an admin can…", 2026-09-23) |
+
+> **How 024–028 were verified (2026-09-23):** calls were made to the live
+> PostgREST API with the public anon key. An existing function answers with its
+> own error message (e.g. "Match not found"), while a missing one answers
+> `PGRST202`. This checks existence only, not SECURITY DEFINER flags or pg_cron
+> schedules. For those, run this in the SQL Editor:
+>
+> ```sql
+> select proname, prosecdef from pg_proc
+> where pronamespace = 'public'::regnamespace
+>   and proname in ('report_match','confirm_match_and_swap','dispute_match',
+>     'auto_confirm_stale_matches','resolve_disputed_match','get_disputed_matches',
+>     'create_ladder_full','swap_player_ranks');
+> select jobname, schedule from cron.job;
+> ```
 
 ## Current known state of `profiles` table columns
 

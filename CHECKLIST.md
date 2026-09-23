@@ -23,46 +23,55 @@
 
 | # | Check | Command | Status | Last Verified |
 |---|---|---|---|---|
-| 1.1 | Production build compiles | `npm run build` | ✅ | 2026-09-16 |
-| 1.2 | Lint is clean | `npx next lint --max-warnings 0` | ✅ | 2026-09-16 |
-| 1.3 | Test suite passes | `npm test` | ✅ (14 pass, 2 skip) | 2026-09-16 |
+| 1.1 | Production build compiles | `npm run build` | ✅ | 2026-09-23 |
+| 1.2 | Lint is clean | `npx next lint --max-warnings 0` | ✅ | 2026-09-23 |
+| 1.3 | Test suite passes | `npm test` | ✅ (23 pass, 2 skip) | 2026-09-23 |
 
 ## 2. Progressive Web App (PWA)
 
 | # | Check | How to verify | Status | Last Verified |
 |---|---|---|---|---|
-| 2.1 | `manifest.json` serves correctly | `curl <url>/manifest.json` → 200, valid JSON | ✅ | 2026-09-16 |
-| 2.2 | Icon 192×192 exists & valid | `curl <url>/icons/icon-192.png` → 200, PNG 192x192 | ✅ | 2026-09-16 |
-| 2.3 | Icon 512×512 exists & valid | `curl <url>/icons/icon-512.png` → 200, PNG 512x512 | ✅ | 2026-09-16 |
-| 2.4 | Service worker serves & registers | `curl <url>/sw.js` → 200, JS content-type | ✅ | 2026-09-16 |
-| 2.5 | App name shows correctly on install | Manifest `name`/`short_name` = "Squash Ladder" | ✅ | 2026-09-16 |
+| 2.1 | `manifest.json` serves correctly | `curl <url>/manifest.json` → 200, valid JSON | ✅ | 2026-09-23 |
+| 2.2 | Icon 192×192 exists & valid | `curl <url>/icons/icon-192.png` → 200, PNG 192x192 | ✅ | 2026-09-23 |
+| 2.3 | Icon 512×512 exists & valid | `curl <url>/icons/icon-512.png` → 200, PNG 512x512 | ✅ | 2026-09-23 |
+| 2.4 | Service worker serves & registers | `curl <url>/sw.js` → 200, JS content-type | ✅ | 2026-09-23 |
+| 2.5 | App name shows correctly on install | Manifest `name`/`short_name` = "Squash Ladder" | ✅ | 2026-09-23 |
 | 2.6 | Installable on Android (Chrome) | Manual: visit site on Android Chrome, check for install banner | ⚠️ Needs manual device test | — |
 | 2.7 | Installable on iOS (Safari "Add to Home Screen") | Manual: Safari → Share → Add to Home Screen | ⚠️ Needs manual device test | — |
 | 2.8 | Standalone mode (no browser chrome) after install | Manual: open installed app, confirm no URL bar | ⚠️ Needs manual device test | — |
 | 2.9 | Offline fallback page | Dedicated `offline.html`/route | ❌ Not built — SW falls back to cached `/` only |
-| 2.10 | Theme color matches app background | `viewport.themeColor` = `#0b0f0d` matches body bg | ✅ | 2026-09-16 |
+| 2.10 | Theme color matches app background | `viewport.themeColor` = `#0b0f0d` matches body bg | ✅ | 2026-09-23 |
 
 ## 3. Mobile Interface (every UI change must re-check this)
 
 | # | Check | How to verify | Status | Last Verified |
 |---|---|---|---|---|
-| 3.1 | Viewport meta prevents unwanted zoom | `maximumScale: 1, userScalable: false` in layout.tsx | ✅ | 2026-09-16 |
-| 3.2 | Touch targets ≥44px | Manual/visual check on buttons, inputs | ✅ (per AGENTS.md) | 2026-09-16 |
-| 3.3 | Sticky header works on scroll | Manual: scroll on mobile viewport | ✅ (per AGENTS.md) | 2026-09-16 |
-| 3.4 | Home page 50/50 layout collapses correctly on mobile | `grid-cols-1` on small screens, `lg:grid-cols-2` on large | ✅ | 2026-09-16 |
+| 3.1 | Viewport meta prevents unwanted zoom | `maximumScale: 1, userScalable: false` in layout.tsx | ✅ | 2026-09-23 |
+| 3.2 | Touch targets ≥44px | Manual/visual check on buttons, inputs | ✅ (per AGENTS.md) | 2026-09-23 |
+| 3.3 | Sticky header works on scroll | Manual: scroll on mobile viewport | ✅ (per AGENTS.md) | 2026-09-23 |
+| 3.4 | Home page single-column flow (50/50 "All Ladders" panel removed 2026-09-23) | Search → city cards → How It Works | ✅ | 2026-09-23 |
 | 3.5 | QR codes readable/scannable on mobile screen | Visual check on club page | ⚠️ Needs manual device test | — |
 | 3.6 | Forms (login/register/challenge/report score) usable on mobile | Manual: fill out each form on a phone-sized viewport | ⚠️ Needs manual device test | — |
-| 3.7 | Bottom install banner doesn't block content | Visual: banner has `pointer-events-none` wrapper, doesn't cover critical UI | ✅ | 2026-09-16 |
+| 3.7 | Bottom install banner doesn't block content | Visual: banner has `pointer-events-none` wrapper, doesn't cover critical UI | ✅ | 2026-09-23 |
 | 3.8 | PWAInstaller banner respects safe-area (notch/home indicator) | `viewportFit: cover` set; banner uses safe padding | ⚠️ Not explicitly verified |
 
-## 4. Documentation (this is itself part of the checklist — meta-check)
+## 4. Notifications & integrations (added 2026-09-23)
+
+| # | Check | How to verify | Status | Last Verified |
+|---|---|---|---|---|
+| 4a.1 | Phone OTP (Twilio via Supabase) sends a real SMS | Register with a real number | ✅ | 2026-09-22 |
+| 4a.2 | Resend domain `squashladder.in` verified | resend.com/domains shows Verified | ❌ Pending | 2026-09-23 |
+| 4a.3 | `ladder_standings.email` exists (needed for challenge/score emails) | `GET /rest/v1/ladder_standings?select=email&limit=0` | ❌ Missing, sql/023 not applied | 2026-09-23 |
+| 4a.4 | Daily expiry-reminder cron runs | Hermes cron `squash-ladder-expiry-reminder`, last_status ok | ✅ | 2026-09-23 |
+
+## 5. Documentation (this is itself part of the checklist — meta-check)
 
 | # | Check | Status | Last Verified |
 |---|---|---|---|
-| 4.1 | `AGENTS.md` reflects current build state | ✅ | 2026-09-16 |
-| 4.2 | `docs/DEVELOPMENT.md` has an entry for the latest session | ✅ | 2026-09-16 |
-| 4.3 | `sql/README.md` reflects latest migration | ✅ | 2026-09-16 |
-| 4.4 | This checklist itself was re-run this session | ✅ | 2026-09-16 |
+| 4.1 | `AGENTS.md` reflects current build state | ✅ | 2026-09-23 |
+| 4.2 | `docs/DEVELOPMENT.md` has an entry for the latest session | ✅ | 2026-09-23 |
+| 4.3 | `sql/README.md` reflects latest migration | ✅ | 2026-09-23 |
+| 4.4 | This checklist itself was re-run this session | ✅ | 2026-09-23 |
 
 ---
 

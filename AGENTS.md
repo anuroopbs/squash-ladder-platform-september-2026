@@ -27,22 +27,71 @@ Next.js 14 (App Router) + Tailwind CSS + Supabase (Postgres + Auth).
 
 ## ✅ What's actually built (don't rebuild these)
 
-- **Home page** (`app/page.tsx`) — city explorer, search, "All Ladders" grid
-  with search + Join button per ladder, How It Works, Vision section
-- **City page** (`app/[citySlug]/page.tsx`) — club cards for that city
-- **Club Hub** (`app/[citySlug]/[clubSlug]/page.tsx`) — real ladder table,
-  challenges, score reporting, match history, QR code share section,
+- **Home page** (`app/page.tsx`) — single flow: search (cities AND clubs,
+  `GlobalExplorer` + `ClubSearchResultCard`) → city cards (whole card
+  clickable) → How It Works → Vision. The old side-by-side "All Ladders"
+  panel was removed 2026-09-23 (`components/home/LadderSidebar.tsx` is now
+  unused, kept for reference).
+- **Coaching announcement bar** (`components/home/CoachingAnnouncementBar.tsx`)
+  — above the header on every page except `/login` and `/register`, links
+  to Instagram, dismissible for 30 days (localStorage).
+- **City page** (`app/[citySlug]/page.tsx`) — "← All cities" back button,
+  club cards (whole card clickable). Clubs with 0 players are shown with a
+  "No ladder yet" label; only "Test Club" is hidden (`lib/queries/clubs.ts`).
+- **Club Hub** (`app/[citySlug]/[clubSlug]/page.tsx`) — "← Back to [City]"
+  button, larger breadcrumbs, ladder table with W/L record, last match and
+  "You can challenge" tags, Join card for signed-out visitors, challenges,
+  score reporting, match history, QR code (below rankings),
   `loading.tsx` + `error.tsx` boundaries
-- **Auth** — `/login` and `/register`, each with **Email+Password** AND
-  **Phone OTP** tabs (`components/auth/LoginForm.tsx`, `RegisterForm.tsx`).
-  Phone auth needs Supabase Dashboard → Authentication → Providers → Phone
-  → **enabled** by the user before OTP actually works end-to-end.
-- **Profile page** (`app/profile/page.tsx`) — basic player dashboard
-- **Ladder system** — join, challenge (1-3 ranks above only), report score,
-  atomic rank swap. Server functions: `swap_player_ranks`,
-  `report_match_and_swap`, `join_ladder`, `expire_old_challenges`,
-  `validate_challenge_rank_gap` trigger — all in
-  `sql/migration_ladder_overhaul.sql` (already applied to prod DB)
+- **SEO** — per-city/per-club meta titles + SportsOrganization JSON-LD
+- **Error page** — chunk-load errors after a deploy trigger a full reload
+  with a plain "We've updated the site" message (`lib/isChunkLoadError.ts`)
+- **Dates** — one shared formatter `lib/formatDate.ts` ("9 Sep 2026", fixed
+  timezone) so server and browser match (fixed React hydration errors
+  #425/#422). Use it for every date — never `toLocaleDateString()`.
+- **Auth** — `/login` and `/register`, phone OTP is the default tab, email +
+  password is the second tab (`components/auth/LoginForm.tsx`,
+  `RegisterForm.tsx`). Phone OTP is **live and enabled in Supabase**. After a
+  phone signup the user is asked for an email (`components/profile/AddPhoneNumber.tsx`).
+- **Profile page** (`app/profile/page.tsx`) — player dashboard
+- **Ladder system** — join, challenge (1-3 ranks above only), report score →
+  opponent confirms → ranks swap (`report_match`, `confirm_match_and_swap`,
+  sql/026). Undisputed results auto-confirm after 48h
+  (`auto_confirm_stale_matches`, pg_cron). Challenges expire after 7 days
+  (`expire_old_challenges`, pg_cron, sql/021). Rank functions are
+  SECURITY DEFINER (sql/022).
+- **Score disputes** — either player can flag a result (`dispute_match`);
+  it goes to the admin queue (`components/admin/DisputeQueuePanel.tsx`) where
+  an admin confirms or voids it (`resolve_disputed_match`, sql/028).
+- **Admin panel** (`app/admin/page.tsx`) — only for `profiles.is_admin = true`
+  (others are redirected). Remove/move players on any ladder
+  (`AdminLadderPanel.tsx`) + dispute queue. sql/025.
+- **Self-service ladder creation** — any signed-in user can create a
+  city/club/ladder (`CreateLadderModal.tsx`, sql/027).
+- **Email notifications** (via Resend, sent from `notifications@squashladder.in`):
+  - "You've been challenged" → `app/api/notify/challenge`
+  - "Score reported, please confirm" → `app/api/notify/score-reported`
+  - "48 hours left to play" reminder → `app/api/notify/expiry-reminder`,
+    called daily at 09:00 IST by the Hermes cron job
+    `squash-ladder-expiry-reminder` (script `squash-expiry-reminder.sh`,
+    protected by `CRON_SECRET`). Duplicate sends prevented by
+    `challenges.reminder_sent_at` (sql/024).
+  - Vercel production env vars set: `RESEND_API_KEY`, `CRON_SECRET`,
+    `SUPABASE_SERVICE_ROLE_KEY`, plus the two public Supabase vars.
+  - ⚠️ **Challenge and score emails are never triggered (found 2026-09-23)**:
+    migration 023 (email on `ladder_standings`) was never applied, so
+    `opponent.email` is always empty and the notify routes are never called.
+    The daily reminder is not affected because it reads emails with the service
+    role key.
+  - ⚠️ **Resend domain still Pending**: the Resend dashboard shows
+    `squashladder.in` as **Pending** (checked 2026-09-23). The 4 DNS records
+    (DKIM `resend._domainkey`, MX + SPF on `send`, DMARC `_dmarc`) were added in
+    **Vercel DNS** on 2026-09-21. DNS for this domain is managed by Vercel, not
+    GoDaddy (GoDaddy is only the registrar).
+- **Phone OTP via Twilio**: the Supabase Phone provider is enabled with Twilio.
+  An end-to-end test with a real SMS succeeded on 2026-09-22.
+- **Rollback points** — git tags `milestone-2-2026-09-23` and
+  `milestone-3-2026-09-23` (both on `fc9c3c8`); steps in `ROLLBACK.md`.
 - **QR codes** — `components/ladder/QRCodeCard.tsx`, one per ladder on the
   Club Hub page, links straight to that ladder
 - **Support contact** — `components/ui/SupportContact.tsx`, links to
@@ -57,18 +106,19 @@ Next.js 14 (App Router) + Tailwind CSS + Supabase (Postgres + Auth).
 
 ## 🟡 Known gaps / not done yet
 
-- **Empty ladders**: several clubs have 0 players (Delhi Gymkhana was
-  intentionally cleared of fake data — real users need to join it)
-- **Email/phone visibility**: `profiles.phone` column exists but is NULL
-  for all pre-existing users (only new signups populate it via the
-  `handle_new_user` trigger). Emails live in `auth.users`, not `profiles`
-  — need service_role key or Dashboard SQL Editor to read them, `anon` key
-  can't join across schemas.
-- **No automated tests** — ✅ RESOLVED (see `lib/*.test.ts`, run `npm test`)
+- **Empty ladders**: all clubs with 0 players are shown in city listings
+  with a "No ladder yet" label, so players can discover them and be the
+  first to join. Only "Test Club" is hidden (seed/test data)
+- **Email/phone visibility**: `profiles.phone` and `profiles.email` exist.
+  Phone is NULL for users who signed up before phone capture; email was
+  backfilled from `auth.users` (sql/011).
 - **Some `as any` / `as unknown as` casts** remain in older query files —
   flagged but not all cleaned up
-- **Admin panel** — none; all data ops go through SQL Editor manually
-- **Notifications** — no email/push/SMS when challenged, score reported, etc.
+- **Notifications are email only** — no SMS/push yet. Players who signed up
+  by phone and never added an email get no notification emails.
+- **Offline page** — PWA has no dedicated offline fallback (see CHECKLIST 2.9)
+- **Branch not merged** — all work lives on `feature/ladder-system-overhaul`;
+  `main` is the older version. Production is deployed from this branch via CLI.
 
 ## 🗄️ Database facts worth knowing before writing SQL
 
@@ -80,12 +130,12 @@ Next.js 14 (App Router) + Tailwind CSS + Supabase (Postgres + Auth).
   join first.
 - RLS is on for every table. `anon` key = public read + own-row writes
   only. Cleanup/bulk changes that touch other users' rows need the
-  Supabase **SQL Editor** (runs as postgres, bypasses RLS) — the user runs
-  these manually, they are pasted **inline in chat**, never as a file
-  attachment (user can't open `.sql` files from Vercel/GitHub previews).
+  Supabase **SQL Editor** (runs as postgres, bypasses RLS). The user has
+  authorised the agent to run SQL itself in the SQL Editor through the Hermes
+  preview pane and report the results. Do not hand SQL to the user to run.
 - `sql/` folder is a running log of every migration ever applied — treat
   it as history, not a single source of truth. Files are numbered
-  `001`–`013`+ in the order they were actually applied to production;
+  `001`–`028` in the order they were actually applied to production;
   see `sql/README.md` for the full table and which files are
   `_SUPERSEDED` by a later one. `001_schema.sql` is the original base;
   everything after `002_migration_ladder_overhaul.sql` are incremental
@@ -109,8 +159,10 @@ Next.js 14 (App Router) + Tailwind CSS + Supabase (Postgres + Auth).
    commit messages are detailed and describe exactly what shipped.
 3. Check `vercel ls` for the current live deployment before assuming
    something isn't deployed yet.
-4. If asked to change ladder/player data, write the SQL, show it inline,
-   and let the user run it in Supabase SQL Editor — don't attempt writes
-   via the `anon` client for anything touching other users' rows.
-5. Update **this file** when you ship something non-trivial, so the next
-   session (any surface) starts oriented instead of guessing.
+4. Any SQL change: run it yourself in the Supabase SQL Editor through the
+   Hermes preview pane (never take over the user's own Chrome), then add
+   the next numbered file to `sql/` and a row to `sql/README.md`.
+5. Update **this file**, `docs/DEVELOPMENT.md` and `CHECKLIST.md` when you ship
+   something, in the same commit, and push to GitHub.
+6. Before recommending "next steps", check this file, the git log and the
+   code. Do not suggest things that are already done.
