@@ -6,6 +6,7 @@ import { ChallengeModal } from "./ChallengeModal";
 import { ReportScoreModal } from "./ReportScoreModal";
 import { JoinLadderButton } from "./JoinLadderButton";
 import type { LadderStandingRow, ChallengeWithProfiles } from "@/lib/types/database";
+import type { PlayerMatchStats } from "@/lib/queries/ladders";
 import { formatDate } from "@/lib/formatDate";
 
 interface LadderTableProps {
@@ -14,6 +15,7 @@ interface LadderTableProps {
   currentPlayerId: string | null;
   ladderId: string;
   isMember: boolean;
+  stats?: PlayerMatchStats[];
 }
 
 export function LadderTable({
@@ -22,10 +24,15 @@ export function LadderTable({
   currentPlayerId,
   ladderId,
   isMember,
+  stats,
 }: LadderTableProps) {
   const [challengeModalOpen, setChallengeModalOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [selectedOpponent, setSelectedOpponent] = useState<LadderStandingRow | null>(null);
+
+  const statsByPlayer = new Map(
+    (stats ?? []).map((s) => [s.player_id, s])
+  );
 
   const getRankBadge = (rank: number) => `#${rank}`;
 
@@ -52,7 +59,8 @@ export function LadderTable({
     return "Challenged You";
   };
 
-  const currentPlayerRank = standings.find((s) => s.player_id === currentPlayerId)?.rank ?? 999;
+  const currentPlayerRank =
+    standings.find((s) => s.player_id === currentPlayerId)?.rank ?? 999;
 
   const handleChallenge = (opponent: LadderStandingRow) => {
     setSelectedOpponent(opponent);
@@ -92,6 +100,7 @@ export function LadderTable({
               currentPlayerRank - player.rank <= 3;
 
             const hasActiveChallenge = getActiveChallenge(player.player_id);
+            const playerStats = statsByPlayer.get(player.player_id);
 
             return (
               <div
@@ -104,7 +113,9 @@ export function LadderTable({
               >
                 {/* Mobile: stacked layout */}
                 <div className="flex items-center gap-3">
-                  <div className={`w-12 text-center text-lg font-bold shrink-0 ${getRankBadgeClass(player.rank)}`}>
+                  <div
+                    className={`w-12 text-center text-lg font-bold shrink-0 ${getRankBadgeClass(player.rank)}`}
+                  >
                     {getRankBadge(player.rank)}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -117,15 +128,30 @@ export function LadderTable({
                           You
                         </span>
                       )}
+                      {canChallenge && !hasActiveChallenge && (
+                        <span className="shrink-0 rounded bg-emerald-500/20 px-1.5 py-0.5 text-xs font-medium text-emerald-300">
+                          You can challenge
+                        </span>
+                      )}
                       {hasActiveChallenge && (
                         <span className="shrink-0 rounded bg-blue-500/20 px-1.5 py-0.5 text-xs font-medium text-blue-300">
                           {getChallengeLabel(player.player_id)}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-white/40 mt-0.5">
-                      Joined {formatDate(player.joined_at)}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-white/40 mt-0.5">
+                      <span>Joined {formatDate(player.joined_at)}</span>
+                      {playerStats && (
+                        <>
+                          <span>
+                            {playerStats.wins}W / {playerStats.losses}L
+                          </span>
+                          {playerStats.last_match_at && (
+                            <span>Last: {formatDate(playerStats.last_match_at)}</span>
+                          )}
+                        </>
+                      )}
+                    </div>
                     {isMember && player.phone && (
                       <a
                         href={`tel:${player.phone}`}

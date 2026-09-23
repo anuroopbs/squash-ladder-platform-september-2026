@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getClubWithCity } from "@/lib/queries/ladders";
-import { getLadderStandings } from "@/lib/queries/ladders";
+import { getLadderStandings, getPlayerMatchStats } from "@/lib/queries/ladders";
 import { getChallengesByLadder } from "@/lib/queries/challenges";
 import { getMatchesByLadder } from "@/lib/queries/challenges";
 import { getCurrentPlayer } from "@/lib/queries/profile";
@@ -127,9 +127,12 @@ export default async function ClubHubPage({
   }
 
   const primaryLadder = ladders[0];
-  const standings = await getLadderStandings(primaryLadder.id);
-  const challenges = await getChallengesByLadder(primaryLadder.id);
-  const matches = await getMatchesByLadder(primaryLadder.id, 10);
+  const [standings, challenges, matches, playerMatchStats] = await Promise.all([
+    getLadderStandings(primaryLadder.id),
+    getChallengesByLadder(primaryLadder.id),
+    getMatchesByLadder(primaryLadder.id, 10),
+    getPlayerMatchStats(primaryLadder.id),
+  ]);
   const currentPlayer = await getCurrentPlayer();
   const playerLadderInfo = currentPlayer?.user
     ? await getLadderPlayer(primaryLadder.id, currentPlayer.user.id)
@@ -142,6 +145,8 @@ export default async function ClubHubPage({
       (c.challenger_id === currentPlayer?.user?.id ||
         c.challenged_id === currentPlayer?.user?.id)
   );
+
+  const isMember = playerLadderInfo !== null;
 
   // Handle join=true from home page
   const showJoinPrompt = searchParams.join === "true";
@@ -196,7 +201,7 @@ export default async function ClubHubPage({
             <div>
               <h2 className="font-semibold text-yellow-300">Sign in to join</h2>
               <p className="mt-1 text-sm text-white/60">
-                You need to be logged in to join this ladder.
+                You need to be signed in to join this ladder.
               </p>
             </div>
             <a
@@ -209,7 +214,36 @@ export default async function ClubHubPage({
         </div>
       )}
 
-      {/* QR Codes — AT THE TOP OF THE PAGE, visible immediately */}
+      {/* Primary action for non-members: Join this ladder. Moved up
+          so it's prominent without needing to scroll past rankings. */}
+      {!isMember && currentPlayer?.user && !showJoinPrompt && (
+        <div className="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-court-400/20 bg-court-500/5 p-5">
+          <div>
+            <h2 className="font-semibold text-court-300">Not on this ladder yet?</h2>
+            <p className="mt-1 text-sm text-white/60">
+              Join to start challenging players and climbing the rankings.
+            </p>
+          </div>
+          <JoinLadderButton ladderId={primaryLadder.id} />
+        </div>
+      )}
+
+      {/* ============================================ */}
+      {/* LADDER RANKINGS                             */}
+      {/* ============================================ */}
+      <div className="mt-8">
+        <LadderTable
+          standings={standings}
+          challenges={challenges}
+          currentPlayerId={currentPlayer?.user?.id ?? null}
+          ladderId={primaryLadder.id}
+          isMember={playerLadderInfo !== null}
+          stats={playerMatchStats}
+        />
+      </div>
+
+      {/* QR Codes — below the rankings, not above them.
+          Rankings are what players came for; QR is secondary. */}
       <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
         <h2 className="text-lg font-semibold text-white">📱 Share This Ladder</h2>
         <p className="mt-1 text-sm text-white/50">
@@ -225,38 +259,6 @@ export default async function ClubHubPage({
             />
           ))}
         </div>
-      </div>
-
-      {/* ACTIVITY SECTION — BELOW QR */}
-      <div className="mt-8">
-        {/* Active Challenges — Most important, always first */}
-        {currentPlayer?.user && myChallenges.length > 0 && (
-          <div className="mb-6 rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-5">
-            <h2 className="text-lg font-semibold text-yellow-300">⚔️ Action Required</h2>
-            <p className="mt-1 text-sm text-white/60">
-              You have pending challenges that need your response.
-            </p>
-            <div className="mt-4">
-              <ChallengesList
-                challenges={challenges}
-                currentPlayerId={currentPlayer.user.id}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ============================================ */}
-      {/* LADDER RANKINGS                             */}
-      {/* ============================================ */}
-      <div className="mt-8">
-        <LadderTable
-          standings={standings}
-          challenges={challenges}
-          currentPlayerId={currentPlayer?.user?.id ?? null}
-          ladderId={primaryLadder.id}
-          isMember={playerLadderInfo !== null}
-        />
       </div>
 
       {/* Match History — at the bottom */}
