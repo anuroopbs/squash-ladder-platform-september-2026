@@ -32,7 +32,7 @@ export default async function ProfilePage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-court-500/15 text-3xl ring-1 ring-inset ring-court-500/30">
-          🎾
+          🏆
         </div>
         <div>
           <h1 className="text-2xl font-bold text-white">

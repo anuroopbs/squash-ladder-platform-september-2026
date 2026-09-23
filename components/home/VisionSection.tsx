@@ -13,7 +13,7 @@ export function VisionSection() {
       <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-court-500/15 text-2xl ring-1 ring-inset ring-court-500/30">
-            🏸
+            🏆
           </div>
           <h3 className="mt-4 font-semibold text-white">Play the Game</h3>
           <p className="mt-2 text-sm text-white/55">

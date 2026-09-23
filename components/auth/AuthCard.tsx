@@ -19,7 +19,7 @@ export function AuthCard({
             href="/"
             className="inline-flex items-center gap-2 text-lg font-semibold text-white"
           >
-            🎾 Ladder
+            🏆 Ladder
           </Link>
           <h1 className="mt-6 text-2xl font-bold tracking-tight text-white">
             {title}

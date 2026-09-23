@@ -114,7 +114,7 @@ export default async function HomePage() {
 
       {/* Coaching mention — low-key, same handle as support */}
       <div className="mt-10 flex items-center justify-center gap-2 text-xs text-white/35">
-        <span>🎾</span>
+        <span>🏆</span>
         <span>
           Want squash coaching?{" "}
           <a

@@ -17,7 +17,7 @@ export function ClubCard({
     >
       <div className="flex items-center gap-3">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-court-500/15 text-lg ring-1 ring-inset ring-court-500/30">
-          🏸
+          🏆
         </div>
         <div>
           <h3 className="font-semibold text-white">{club.name}</h3>
