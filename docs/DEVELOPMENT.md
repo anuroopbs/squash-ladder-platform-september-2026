@@ -54,11 +54,15 @@
   old routes emailed any address in the request body, with no login needed.
 - All user text in the emails is HTML‑escaped (`lib/notify.ts`, with tests).
 - Expiry reminder: `reminder_sent_at` is now set only after a successful send.
-- Still open: Resend shows `squashladder.in` as **Pending**, even though all 4
-  DNS records resolve correctly on public DNS (checked with 8.8.8.8). The
-  Resend API key in Vercel is a hidden secret, so the agent can't query
-  Resend's API. The fix is to click "Verify" / "Restart" on the domain in
-  the Resend dashboard. Emails will not deliver until then.
+- Resend domain still **Pending**. On the domain page, DKIM showed Verified but
+  the `send` MX + SPF records showed Pending. Root cause found in Vercel DNS:
+  there were two MX records on `send`, the correct
+  `feedback-smtp.ap-northeast-1.amazonses.com` and a typo'd
+  `feedbacksmtp.ap-northeast-1.amazonses.com` (from the 2026-09-21 setup).
+  The typo record (`rec_5941975894fc6f91cf21c2b0`) was removed with
+  `vercel dns rm`. Public DNS now returns only the correct MX. After that,
+  Resend restarted verification. Emails will not deliver until the status
+  turns Verified, usually within a few hours.
 - Still open: `profiles.email`/`phone` readable by anon key (see AGENTS.md).
 
 ### Found during the 2026-09-23 documentation audit

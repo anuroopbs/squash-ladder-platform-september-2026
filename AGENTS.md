@@ -93,6 +93,8 @@ Next.js 14 (App Router) + Tailwind CSS + Supabase (Postgres + Auth).
     (DKIM `resend._domainkey`, MX + SPF on `send`, DMARC `_dmarc`) were added in
     **Vercel DNS** on 2026-09-21. DNS for this domain is managed by Vercel, not
     GoDaddy (GoDaddy is only the registrar).
+    A duplicate typo MX record (`feedbacksmtp…`) was removed on 2026-09-23 and
+    verification restarted. Check resend.com/domains for **Verified**.
 - **Phone OTP via Twilio**: the Supabase Phone provider is enabled with Twilio.
   An end-to-end test with a real SMS succeeded on 2026-09-22.
 - **Rollback points** — git tags `milestone-2-2026-09-23` and
