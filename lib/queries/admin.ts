@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { LadderStandingRow } from "@/lib/types/database";
+import { getLadderContacts } from "@/lib/queries/ladders";
 
 // ----------------------------------------------------------------------------
 // Admin-only queries. Every function here assumes the caller has already
@@ -31,6 +32,14 @@ export async function getAllLaddersWithPlayers(): Promise<AdminLadderGroup[]> {
 
   if (error) throw error;
   const rows = (data ?? []) as LadderStandingRow[];
+
+  // Contact details come from an admin-only function (sql/029).
+  const contacts = await getLadderContacts(null);
+  for (const row of rows) {
+    const c = contacts.get(`${row.ladder_id}:${row.player_id}`);
+    row.phone = c?.phone ?? null;
+    row.email = c?.email ?? null;
+  }
 
   const groups = new Map<string, AdminLadderGroup>();
   for (const row of rows) {

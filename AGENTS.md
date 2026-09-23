@@ -119,11 +119,6 @@ Next.js 14 (App Router) + Tailwind CSS + Supabase (Postgres + Auth).
 - **Email/phone visibility**: `profiles.phone` and `profiles.email` exist.
   Phone is NULL for users who signed up before phone capture; email was
   backfilled from `auth.users` (sql/011).
-- **Privacy: `profiles` is readable with the public anon key**, including
-  `email` and `phone` (checked 2026-09-23: 30 rows, 28 emails). This comes from
-  the original `001_schema.sql` read policy. It should be locked down (e.g.
-  move email/phone into a private table or a column‑level grant) without
-  breaking the joins in `lib/queries/*` that read `display_name`.
 - **Some `as any` / `as unknown as` casts** remain in older query files —
   flagged but not all cleaned up
 - **Notifications are email only** — no SMS/push yet. Players who signed up
@@ -133,6 +128,18 @@ Next.js 14 (App Router) + Tailwind CSS + Supabase (Postgres + Auth).
   `main` is the older version. Production is deployed from this branch via CLI.
 
 ## 🗄️ Database facts worth knowing before writing SQL
+
+- **Player email + phone are private (sql/029, 2026-09-23).** `anon` and
+  `authenticated` can only `select` the columns `id, display_name, avatar_url,
+  is_admin, created_at, updated_at` on `profiles`. **Never use
+  `select("*")` or `profiles(*)` on profiles in app code**, because it fails with
+  `42501`. Use:
+  - `rpc("get_my_profile")` for the signed-in user's own full row (`getCurrentPlayer()`)
+  - `rpc("get_ladder_contacts", { ladder_uuid })` for phones, which returns
+    rows only to members of that ladder (plus emails, for every ladder, to admins),
+    via `getLadderContacts()` in `lib/queries/ladders.ts`
+  - the service-role key on the server (notify routes, reminder cron)
+  `ladder_standings` has no phone/email columns any more.
 
 - **`profiles.id` is a hard FK to `auth.users.id`** — you cannot
   `INSERT INTO profiles` with a fresh `gen_random_uuid()`; the row will be

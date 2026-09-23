@@ -11,11 +11,10 @@ export async function getCurrentPlayer() {
 
   if (!user) return null;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .maybeSingle();
+  // email/phone are no longer readable via a plain select (sql/029), so the
+  // user's own full row comes from a security-definer function.
+  const { data } = await supabase.rpc("get_my_profile");
+  const profile = (Array.isArray(data) ? data[0] : data) ?? null;
 
   return { user, profile };
 }

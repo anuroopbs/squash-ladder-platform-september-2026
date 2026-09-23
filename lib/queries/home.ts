@@ -19,7 +19,7 @@ export async function getCityLadderPreviews() {
   const supabase = createClient();
   const { data: cities } = await supabase
     .from("cities")
-    .select("*, clubs(*, ladders(*, ladder_players(*, profiles(*))))")
+    .select("*, clubs(*, ladders(*, ladder_players(*, profiles(id, display_name, avatar_url))))")
     .order("name");
 
   return cities ?? [];

@@ -63,8 +63,10 @@
 | 4a.2 | Resend domain `squashladder.in` verified | resend.com/domains shows Verified | ❌ Pending | 2026-09-23 |
 | 4a.3 | Notify routes reject unauthenticated calls | `POST /api/notify/challenge` without a session → 401 | ✅ | 2026-09-23 |
 | 4a.3b | `ladder_standings` does NOT expose email | `GET /rest/v1/ladder_standings?select=email` → 42703 | ✅ | 2026-09-23 |
-| 4a.3c | `profiles` email/phone NOT readable with anon key | `GET /rest/v1/profiles?select=email` | ❌ Readable (open issue) | 2026-09-23 |
+| 4a.3c | `profiles` email/phone NOT readable with anon key | `GET /rest/v1/profiles?select=email` | ✅ Blocked (42501), sql/029 | 2026-09-23 |
 | 4a.4 | Daily expiry-reminder cron runs | Hermes cron `squash-ladder-expiry-reminder`, last_status ok | ✅ | 2026-09-23 |
+
+| 4a.5 | Signed-in pages after sql/029: /profile shows own phone, club page shows phones to members, /admin shows contacts | Manual, signed in on a phone | ⚠️ Needs manual check (agent can't sign in) | — |
 
 ## 5. Documentation (this is itself part of the checklist — meta-check)
 

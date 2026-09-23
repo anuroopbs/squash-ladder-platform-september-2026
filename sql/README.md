@@ -51,6 +51,7 @@
 | 026 | `026_match_confirmation_flow.sql` | Splits reporting from rank swapping: `report_match()` only records the result, and ranks swap when the opponent confirms (`confirm_match_and_swap()`). Adds `dispute_match()`, plus `auto_confirm_stale_matches()` (pg_cron) to auto-confirm undisputed results after 48h. Replaces `report_match_and_swap()`. | ✅ Applied (functions answer via API, 2026-09-23) |
 | 027 | `027_create_ladder_flow.sql` | `slugify()` + `create_ladder_full()`, one atomic SECURITY DEFINER function behind the self-service "Create a Ladder" flow. | ✅ Applied (`create_ladder_full` exists via API, 2026-09-23) |
 | 028 | `028_dispute_resolution_queue.sql` | Admin dispute queue: `get_disputed_matches()` + `resolve_disputed_match()` (confirm with a final winner/score, or void and reopen the challenge). | ✅ Applied (both functions answer "Only an admin can…", 2026-09-23) |
+| 029 | `029_private_contact_details.sql` | **Privacy fix**: column-level grants so `anon`/`authenticated` can no longer read `profiles.email`/`phone`. Adds `get_my_profile()` and `get_ladder_contacts()` (members/admins only), and removes phone from `ladder_standings`. Applied in 2 steps (functions, then deploy app code, then lockdown) so the live site never broke. | ✅ Applied 2026-09-23. Verified via API: `profiles?select=email` → 42501, names still readable, 15 standings rows, all public pages 200 |
 
 > **How 024–028 were verified (2026-09-23):** calls were made to the live
 > PostgREST API with the public anon key. An existing function answers with its

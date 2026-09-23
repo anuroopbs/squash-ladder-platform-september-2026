@@ -134,3 +134,26 @@ export async function getClubWithCity(
   if (error) throw error;
   return data;
 }
+
+/**
+ * Phone (and, for admins, email) for players on a ladder. Returns nothing
+ * unless the caller is a member of that ladder or an admin -- enforced in
+ * the database by get_ladder_contacts() (sql/029). Pass null as an admin to
+ * get every ladder.
+ */
+export async function getLadderContacts(
+  ladderId: string | null
+): Promise<Map<string, { phone: string | null; email: string | null }>> {
+  const supabase = createClient();
+  const { data } = await supabase.rpc("get_ladder_contacts", { ladder_uuid: ladderId });
+  const map = new Map<string, { phone: string | null; email: string | null }>();
+  for (const row of (data ?? []) as {
+    player_id: string;
+    ladder_id: string;
+    phone: string | null;
+    email: string | null;
+  }[]) {
+    map.set(`${row.ladder_id}:${row.player_id}`, { phone: row.phone, email: row.email });
+  }
+  return map;
+}

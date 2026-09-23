@@ -123,8 +123,10 @@ export interface LadderStandingRow {
   display_name: string;
   avatar_url: string | null;
   is_admin: boolean;
-  phone: string | null;
-  email: string | null;
+  /** Not in the view (sql/029). Filled in for ladder members via getLadderContacts(). */
+  phone?: string | null;
+  /** Not in the view (sql/029). Filled in for admins via getLadderContacts(). */
+  email?: string | null;
   joined_at: string;
   ladder_name: string;
   club_name: string;

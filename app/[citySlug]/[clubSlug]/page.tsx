@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getClubWithCity } from "@/lib/queries/ladders";
-import { getLadderStandings, getPlayerMatchStats } from "@/lib/queries/ladders";
+import { getLadderContacts, getLadderStandings, getPlayerMatchStats } from "@/lib/queries/ladders";
 import { getChallengesByLadder } from "@/lib/queries/challenges";
 import { getMatchesByLadder } from "@/lib/queries/challenges";
 import { getCurrentPlayer } from "@/lib/queries/profile";
@@ -147,6 +147,15 @@ export default async function ClubHubPage({
   );
 
   const isMember = playerLadderInfo !== null;
+
+  // Phone numbers are only returned by the DB to members of this ladder
+  // (and admins) -- see sql/029. Everyone else gets the standings without them.
+  if (currentPlayer?.user) {
+    const contacts = await getLadderContacts(primaryLadder.id);
+    for (const row of standings) {
+      row.phone = contacts.get(`${row.ladder_id}:${row.player_id}`)?.phone ?? null;
+    }
+  }
 
   // Handle join=true from home page
   const showJoinPrompt = searchParams.join === "true";

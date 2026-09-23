@@ -65,6 +65,22 @@
   turns Verified, usually within a few hours.
 - Still open: `profiles.email`/`phone` readable by anon key (see AGENTS.md).
 
+### 2026-09-23 (later): player email/phone made private (sql/029)
+- Before: anyone with the public anon key (it ships in the website) could
+  run `GET /rest/v1/profiles?select=email,phone` and get 28 emails and 6 phones.
+- Now: column-level grants. Names still public; email/phone only through
+  `get_my_profile()` (own row) and `get_ladder_contacts()` (ladder members get
+  phones, admins get phones + emails). App code updated: `getCurrentPlayer`,
+  club page, admin panel, home query (`profiles(*)` → named columns).
+- Rolled out in order: functions → deploy app → revoke. No downtime: all public
+  pages returned 200 before and after, and the club page renders its ladder.
+- Not yet verified: signed-in views (needs a real login on a phone).
+
+### AI audit log
+- `scripts/export-audit-log.py [session_id] [YYYY-MM-DD]` exports every AI tool
+  call from the local Hermes session database into `docs/audit/AUDIT-LOG-<date>.md`
+  (time, tool, what it did; secrets masked). 2026-09-23: 991 actions.
+
 ### Found during the 2026-09-23 documentation audit
 - **sql/023 was never applied.** `ladder_standings.email` does not exist in the
   live DB, so challenge and score-reported emails are never sent (the client
