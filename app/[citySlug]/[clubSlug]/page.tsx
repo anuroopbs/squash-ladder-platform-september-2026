@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { getClubWithCity } from "@/lib/queries/ladders";
 import { getLadderStandings } from "@/lib/queries/ladders";
 import { getChallengesByLadder } from "@/lib/queries/challenges";
@@ -16,6 +17,44 @@ import { CreateLadderButtonForClub } from "@/components/ladder/CreateLadderButto
 
 export const revalidate = 60;
 
+// SEO: each club page already has a real address -- give it a
+// club-specific title/description instead of the generic site default,
+// since this is the page organic search actually needs to surface for
+// "squash club in <city>" / "<club name> ladder" queries.
+export async function generateMetadata({
+  params,
+}: {
+  params: { citySlug: string; clubSlug: string };
+}): Promise<Metadata> {
+  const club = await getClubWithCity(params.citySlug, params.clubSlug);
+  if (!club) return {};
+
+  const cityName = club.cities.name;
+  const title = `${club.name} Squash Ladder — ${cityName} | Squash Ladder`;
+  const description = club.address
+    ? `Join the squash ladder at ${club.name} in ${cityName} (${club.address}). See live rankings, challenge players, and report scores.`
+    : `Join the squash ladder at ${club.name} in ${cityName}. See live rankings, challenge players, and report scores.`;
+  const url = `https://squashladder.in/${params.citySlug}/${params.clubSlug}`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "Squash Ladder",
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
+  };
+}
+
 export default async function ClubHubPage({
   params,
   searchParams,
@@ -26,6 +65,22 @@ export default async function ClubHubPage({
   const club = await getClubWithCity(params.citySlug, params.clubSlug);
   if (!club) notFound();
 
+  // SportsOrganization structured data -- uses the club's real address
+  // when available, so this reads as a genuine local business/sports org
+  // to search engines rather than a generic page.
+  const clubJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SportsOrganization",
+    name: club.name,
+    url: `https://squashladder.in/${params.citySlug}/${params.clubSlug}`,
+    sport: "Squash",
+    ...(club.address ? { address: club.address } : {}),
+    areaServed: {
+      "@type": "City",
+      name: club.cities.name,
+    },
+  };
+
   // Get ladders for this club
   const { getLaddersByClubSlug } = await import("@/lib/queries/ladders");
   const ladders = await getLaddersByClubSlug(params.citySlug, params.clubSlug);
@@ -33,6 +88,10 @@ export default async function ClubHubPage({
   if (ladders.length === 0) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-12 sm:py-16">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(clubJsonLd) }}
+        />
         <Breadcrumbs
           city={{ slug: club.cities.slug, name: club.cities.name }}
           club={{ slug: club.slug, name: club.name }}
@@ -85,6 +144,10 @@ export default async function ClubHubPage({
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-12 sm:py-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(clubJsonLd) }}
+      />
       {/* Breadcrumbs */}
       <Breadcrumbs
         city={{ slug: club.cities.slug, name: club.cities.name }}
