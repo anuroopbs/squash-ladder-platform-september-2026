@@ -3,6 +3,7 @@ import { getCityBySlug } from "@/lib/queries/cities";
 import { getClubsByCitySlug } from "@/lib/queries/clubs";
 import { Breadcrumbs } from "@/components/location/Breadcrumbs";
 import { ClubCardGrid } from "@/components/location/ClubCardGrid";
+import { CreateLadderButtonForCity } from "@/components/ladder/CreateLadderButtonForCity";
 
 export const revalidate = 60;
 
@@ -31,6 +32,7 @@ export default async function CityPage({
               : `${clubs.length} ${clubs.length === 1 ? "club" : "clubs"} on the ladder`}
           </p>
         </div>
+        <CreateLadderButtonForCity cityId={city.id} />
       </div>
 
       <div className="mt-8">

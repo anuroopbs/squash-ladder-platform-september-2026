@@ -63,13 +63,15 @@ export function ReportScoreModal({ opponent, ladderId, onClose }: ReportScoreMod
         .in("status", ["pending", "accepted"])
         .maybeSingle();
 
-      // Delegate to the atomic report_match_and_swap() Postgres function
-      // instead of inserting the match and then swapping ranks with three
-      // separate client-side UPDATEs (via a fragile rank = -1 scratch
-      // value). The DB function does the insert + conditional swap in one
-      // transaction, using SELECT ... FOR UPDATE to avoid concurrent
-      // reports colliding.
-      const { error: rpcError } = await supabase.rpc("report_match_and_swap", {
+      // Delegate to the atomic report_match() Postgres function. This ONLY
+      // inserts the match as pending_confirmation -- it does NOT swap
+      // ranks. Ranks only move once the opponent confirms the result via
+      // confirm_match_and_swap() (see MatchHistory.tsx), or after 48h of
+      // silence via the auto_confirm_stale_matches() daily sweep. This
+      // closes a real gap found in a system audit: ranks used to swap
+      // the instant a score was reported, before the opponent ever saw
+      // or could dispute it.
+      const { error: rpcError } = await supabase.rpc("report_match", {
         ladder_uuid: ladderId,
         challenge_uuid: relatedChallenge?.id ?? null,
         p1_uuid: user.id,
@@ -80,6 +82,31 @@ export function ReportScoreModal({ opponent, ladderId, onClose }: ReportScoreMod
       });
 
       if (rpcError) throw rpcError;
+
+      // Fire-and-forget email to the opponent asking them to confirm the
+      // result -- never blocks the report itself. Same best-effort
+      // pattern as the challenge notification.
+      if (opponent.email) {
+        const reporterName =
+          (await supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle())
+            .data?.display_name ?? "A player";
+        const winnerName = winner === "me" ? reporterName : opponent.display_name;
+        fetch("/api/notify/score-reported", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: opponent.email,
+            reporterName,
+            opponentName: opponent.display_name,
+            score,
+            winnerName,
+            clubName: opponent.club_name,
+            ladderUrl: `https://squashladder.in/${opponent.city_slug}/${opponent.club_slug}`,
+          }),
+        }).catch(() => {
+          // Silently ignore -- notification is best-effort, not critical path.
+        });
+      }
 
       router.refresh();
       onClose();

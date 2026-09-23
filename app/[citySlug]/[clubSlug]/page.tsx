@@ -12,6 +12,7 @@ import { MatchHistory } from "@/components/ladder/MatchHistory";
 import { JoinLadderButton } from "@/components/ladder/JoinLadderButton";
 import { QRCodeCard } from "@/components/ladder/QRCodeCard";
 import { SupportContact } from "@/components/ui/SupportContact";
+import { CreateLadderButtonForClub } from "@/components/ladder/CreateLadderButtonForClub";
 
 export const revalidate = 60;
 
@@ -53,6 +54,7 @@ export default async function ClubHubPage({
           <p className="mx-auto mt-1 max-w-sm text-sm text-white/50">
             No ladder has been set up for this club yet.
           </p>
+          <CreateLadderButtonForClub cityId={club.city_id} clubId={club.id} />
         </div>
         <div className="mt-6">
           <SupportContact variant="inline" />
@@ -189,7 +191,7 @@ export default async function ClubHubPage({
 
       {/* Match History — at the bottom */}
       <div className="mt-8">
-        <MatchHistory matches={matches} />
+        <MatchHistory matches={matches} currentPlayerId={currentPlayer?.user?.id ?? null} />
       </div>
 
       {/* Support contact */}
