@@ -12,16 +12,10 @@ export function AuthCard({
   footer: React.ReactNode;
 }) {
   return (
-    <main className="flex min-h-screen items-center justify-center px-6 py-16">
+    <main className="flex items-center justify-center px-6 py-10 sm:py-16">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-lg font-semibold text-white"
-          >
-            🏆 Ladder
-          </Link>
-          <h1 className="mt-6 text-2xl font-bold tracking-tight text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-white">
             {title}
           </h1>
           <p className="mt-1.5 text-sm text-white/50">{subtitle}</p>
