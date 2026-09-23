@@ -51,22 +51,6 @@ export default async function HomePage() {
       {/* Vision */}
       <VisionSection />
 
-      {/* Coaching mention — low-key, same handle as support */}
-      <div className="mt-10 flex items-center justify-center gap-2 text-xs text-white/35">
-        <span>🏆</span>
-        <span>
-          Want squash coaching?{" "}
-          <a
-            href="https://www.instagram.com/dublinsquashmentor/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-white/55 hover:text-white/80"
-          >
-            DM @dublinsquashmentor
-          </a>
-        </span>
-      </div>
-
       {/* Footer */}
       <footer className="mt-6 border-t border-white/10 pt-8 text-center">
         <p className="text-sm text-white/40">

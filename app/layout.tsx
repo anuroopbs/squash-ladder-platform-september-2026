@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { CoachingAnnouncementBar } from "@/components/home/CoachingAnnouncementBar";
 
 export const metadata: Metadata = {
   title: "Squash Ladder — find your local racket sports ladder",
@@ -55,6 +56,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen bg-[#0b0f0d] font-sans text-white antialiased">
+        <CoachingAnnouncementBar />
         <SiteHeader />
         {children}
       </body>
