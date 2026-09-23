@@ -8,13 +8,20 @@
  * hydration mismatch errors (#425/#422) and has to discard + re-render
  * the whole subtree client-side, causing visible flicker.
  *
- * This formats using explicit UTC getters and fixed padding, so the
- * output is identical no matter where or in what locale it runs.
+ * This formats using explicit UTC getters and a fixed month-name table,
+ * so the output ("9 Sep 2026") is byte-identical no matter where or in
+ * what locale/timezone it runs -- both server and client always read the
+ * same UTC calendar date for the same timestamp.
  */
+const MONTH_NAMES = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
 export function formatDate(input: string | Date): string {
   const d = typeof input === "string" ? new Date(input) : input;
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = d.getUTCDate();
+  const month = MONTH_NAMES[d.getUTCMonth()];
   const year = d.getUTCFullYear();
-  return `${day}/${month}/${year}`;
+  return `${day} ${month} ${year}`;
 }

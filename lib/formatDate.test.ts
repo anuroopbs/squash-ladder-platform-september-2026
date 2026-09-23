@@ -2,20 +2,20 @@ import { describe, it, expect } from "vitest";
 import { formatDate } from "./formatDate";
 
 describe("formatDate", () => {
-  it("formats a UTC date deterministically as DD/MM/YYYY", () => {
-    expect(formatDate("2026-09-09T00:00:00.000Z")).toBe("09/09/2026");
+  it("formats a UTC date deterministically as 'D Mon YYYY'", () => {
+    expect(formatDate("2026-09-09T00:00:00.000Z")).toBe("9 Sep 2026");
   });
 
-  it("pads single-digit day and month with a leading zero", () => {
-    expect(formatDate("2026-01-05T12:00:00.000Z")).toBe("05/01/2026");
+  it("does not pad the day with a leading zero", () => {
+    expect(formatDate("2026-01-05T12:00:00.000Z")).toBe("5 Jan 2026");
   });
 
-  it("does not pad the 4-digit year", () => {
-    expect(formatDate("2026-12-31T23:59:59.000Z")).toBe("31/12/2026");
+  it("uses a 3-letter month abbreviation", () => {
+    expect(formatDate("2026-12-31T23:59:59.000Z")).toBe("31 Dec 2026");
   });
 
   it("accepts a Date object directly", () => {
-    expect(formatDate(new Date("2026-09-09T00:00:00.000Z"))).toBe("09/09/2026");
+    expect(formatDate(new Date("2026-09-09T00:00:00.000Z"))).toBe("9 Sep 2026");
   });
 
   it("is stable across repeated calls regardless of local timezone/locale", () => {
@@ -26,6 +26,6 @@ describe("formatDate", () => {
     const first = formatDate(input);
     const second = formatDate(input);
     expect(first).toBe(second);
-    expect(first).toBe("09/09/2026");
+    expect(first).toBe("9 Sep 2026");
   });
 });
