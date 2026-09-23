@@ -3,13 +3,33 @@ import type { CityWithClubCount } from "@/lib/types/database";
 
 export async function getCities(): Promise<CityWithClubCount[]> {
   const supabase = createClient();
+  // Pull clubs with their ladder/player counts so the visible-club count
+  // (excluding test data and zero-player clubs, same rule as the city
+  // page) can be computed here instead of the raw total -- otherwise the
+  // homepage would advertise clubs that then don't even show up once you
+  // click into that city.
   const { data, error } = await supabase
     .from("cities")
-    .select("*, clubs(count)")
+    .select("*, clubs(name, ladders(id, ladder_players(count)))")
     .order("name");
 
   if (error) throw error;
-  const cities = (data ?? []) as CityWithClubCount[];
+  const rows = (data ?? []) as any[];
+
+  const HIDDEN_CLUB_NAMES = new Set(["Test Club"]);
+  const cities: CityWithClubCount[] = rows.map((row) => {
+    const visibleClubCount = (row.clubs ?? []).filter((club: any) => {
+      if (HIDDEN_CLUB_NAMES.has(club.name)) return false;
+      return (club.ladders ?? []).some(
+        (l: any) => (l.ladder_players?.[0]?.count ?? 0) > 0
+      );
+    }).length;
+
+    return {
+      ...row,
+      clubs: [{ count: visibleClubCount }],
+    };
+  });
 
   // Pin Secunderabad/Hyderabad first (user's home city), rest stay
   // alphabetical. No manual sort_order column on cities yet -- if more

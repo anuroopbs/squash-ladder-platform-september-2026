@@ -28,11 +28,11 @@ export function CityCard({ city }: { city: CityWithClubCount }) {
         aria-hidden
       />
       <div className="relative">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="text-xl font-semibold tracking-tight text-white">
+        <div className="flex flex-col gap-1">
+          <h3 className="text-xl font-semibold leading-snug tracking-tight text-white">
             {city.name}
           </h3>
-          <span className="mt-1 shrink-0 text-xs font-medium uppercase tracking-wide text-white/40">
+          <span className="text-xs font-medium uppercase tracking-wide text-white/40">
             {city.country}
           </span>
         </div>
