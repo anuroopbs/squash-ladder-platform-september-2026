@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
 import { toUserMessage } from "@/lib/errors";
 import type { MatchWithProfiles } from "@/lib/types/database";
+import { formatDate } from "@/lib/formatDate";
 
 interface MatchHistoryProps {
   matches: MatchWithProfiles[];
@@ -78,8 +79,16 @@ export function MatchHistory({ matches, currentPlayerId }: MatchHistoryProps) {
             currentPlayerId &&
             currentPlayerId !== match.reported_by &&
             (currentPlayerId === match.player1_id || currentPlayerId === match.player2_id);
+          const isReporter = currentPlayerId && currentPlayerId === match.reported_by;
           const needsMyConfirmation =
             match.status === "pending_confirmation" && isOpponentOfReporter;
+          // The reporter themselves can also flag their own report (e.g. a
+          // score typo) before the opponent confirms/disputes it -- the
+          // dispute_match() RPC already allows either participant, this
+          // was previously just a UI gap that only showed the button to
+          // the non-reporting player.
+          const canFlagOwnReport =
+            match.status === "pending_confirmation" && isReporter;
           const busy = busyMatchId === match.id;
 
           return (
@@ -117,7 +126,7 @@ export function MatchHistory({ matches, currentPlayerId }: MatchHistoryProps) {
                     <span>•</span>
                     <span>{match.score}</span>
                     <span>•</span>
-                    <span>{new Date(match.played_at).toLocaleDateString()}</span>
+                    <span>{formatDate(match.played_at)}</span>
                   </div>
                 </div>
               </div>
@@ -142,6 +151,22 @@ export function MatchHistory({ matches, currentPlayerId }: MatchHistoryProps) {
                     onClick={() => handleDispute(match.id)}
                   >
                     Dispute
+                  </Button>
+                </div>
+              )}
+
+              {canFlagOwnReport && (
+                <div className="mt-3 flex items-center gap-2 border-t border-white/10 pt-3">
+                  <span className="text-xs text-white/50 mr-auto">
+                    Waiting on {match.reported_by === match.player1_id ? match.player2_name : match.player1_name} to confirm — made a mistake?
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    loading={busy}
+                    onClick={() => handleDispute(match.id)}
+                  >
+                    Flag this score
                   </Button>
                 </div>
               )}

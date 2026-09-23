@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { formatDate } from "@/lib/formatDate";
 
 interface ChallengesListProps {
   challenges: ChallengeWithProfiles[];
@@ -78,7 +79,7 @@ export function ChallengesList({ challenges, currentPlayerId }: ChallengesListPr
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-white/40">
-                  {new Date(challenge.created_at).toLocaleDateString()}
+                  {formatDate(challenge.created_at)}
                 </p>
               </div>
 

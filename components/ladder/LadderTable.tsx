@@ -6,6 +6,7 @@ import { ChallengeModal } from "./ChallengeModal";
 import { ReportScoreModal } from "./ReportScoreModal";
 import { JoinLadderButton } from "./JoinLadderButton";
 import type { LadderStandingRow, ChallengeWithProfiles } from "@/lib/types/database";
+import { formatDate } from "@/lib/formatDate";
 
 interface LadderTableProps {
   standings: LadderStandingRow[];
@@ -123,7 +124,7 @@ export function LadderTable({
                       )}
                     </div>
                     <p className="text-xs text-white/40 mt-0.5">
-                      Joined {new Date(player.joined_at).toLocaleDateString()}
+                      Joined {formatDate(player.joined_at)}
                     </p>
                     {isMember && player.phone && (
                       <a

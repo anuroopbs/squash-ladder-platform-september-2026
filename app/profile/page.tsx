@@ -4,6 +4,7 @@ import { getChallengesByPlayer } from "@/lib/queries/challenges";
 import { createClient } from "@/lib/supabase/server";
 import { AddPhoneNumber } from "@/components/profile/AddPhoneNumber";
 import Link from "next/link";
+import { formatDate } from "@/lib/formatDate";
 
 export default async function ProfilePage() {
   const player = await getCurrentPlayer();
@@ -97,7 +98,7 @@ export default async function ProfilePage() {
                     challenged you
                   </p>
                   <p className="text-xs text-white/40">
-                    {new Date(c.created_at).toLocaleDateString()}
+                    {formatDate(c.created_at)}
                   </p>
                 </div>
               </div>
