@@ -11,6 +11,51 @@
 
 ---
 
+## 🗓️ 2026-09-24 — Session 9: Missing #1 bug (model switched to Sonnet 5)
+
+**User report:** "rankings number are not in order... certain number one is
+missing." Read AGENTS.md, CHECKLIST.md, sql/README.md first per standing
+instruction, then did an end-to-end check.
+
+### Root cause
+`sql/014_re_rank_all_ladders.sql` (written 2026-09-16) compacts rank gaps
+left behind by player removals. `sql/README.md` had it marked **"⏳ Needs
+manual apply"** — it was written but never actually run against production.
+Checked the live `ladder_standings` view for every ladder: P Karthik Squash
+Institute was ranked `2,3,4,5,6` (5 players, no one at #1). All 6 other
+ladders were correctly `1..N`.
+
+### Fix (applied 2026-09-24, in the SQL Editor via the preview pane)
+1. Confirmed the `(ladder_id, rank)` unique constraint is deferrable
+   (sql/013) and that the ladder's 2 pending challenges reference player
+   IDs, not ranks, so a bulk re-rank was safe.
+2. Ran sql/014's re-rank query. Verified via the live API: all 7 ladders
+   now `1..N` with zero gaps. Loaded the live club page — `#1 Anuroop BS,
+   #2 NAWiN, #3 Ravali, #4 Prashant Ghalke, #5 Yadhu`.
+3. **Prevented recurrence**: added `sql/030_auto_rerank_on_delete.sql` — an
+   `AFTER DELETE` trigger on `ladder_players` that re-compacts a ladder's
+   ranks automatically the instant a player is removed, from any code path
+   (admin panel's client-side delete, a player leaving via RLS, anything
+   future). SECURITY DEFINER, idempotent, same logic as sql/014 just
+   automatic. Verified the trigger exists and is enabled, and that all
+   ladders were still correctly ranked and all public pages returned 200
+   after creating it.
+4. Updated `sql/README.md` (014 now "Applied 2026-09-24", added row for
+   030), `AGENTS.md` (new bullet + a standing warning: don't let a
+   "Needs manual apply" migration sit — sql/014 sitting unapplied for 8
+   days is exactly what caused this bug), `CHECKLIST.md` (2 new rows).
+
+### Getting the SQL Editor to actually run
+The preview pane's Run button repeatedly looked clicked but didn't execute
+(no error, no result, "Click Run to execute your query" stayed on screen).
+What worked: reload the tab once after typing the query, then click Run —
+for a query containing `DROP TRIGGER`/`DROP VIEW` a confirmation dialog
+("Run query" / "Cancel") appears and needs an explicit click too, easy to
+miss since the page looks identical otherwise. Avoid `Ctrl+Enter` inside the
+editor textarea — it can inject stray characters ("Con") into the query.
+
+---
+
 ## 🗓️ 2026-09-17 → 2026-09-23 — Sessions 4–8 (consolidated catch-up entry)
 
 > This log had no entries after 2026-09-16 even though a lot shipped. This

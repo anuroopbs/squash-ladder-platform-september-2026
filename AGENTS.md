@@ -63,6 +63,12 @@ Next.js 14 (App Router) + Tailwind CSS + Supabase (Postgres + Auth).
 - **Score disputes** — either player can flag a result (`dispute_match`);
   it goes to the admin queue (`components/admin/DisputeQueuePanel.tsx`) where
   an admin confirms or voids it (`resolve_disputed_match`, sql/028).
+- **Ranks stay gap-free automatically** (sql/030, 2026-09-24) — an
+  `AFTER DELETE` trigger on `ladder_players` re-compacts a ladder's ranks to
+  `1..N` the instant a player is removed, from any code path. Fixes/prevents
+  the "missing #1" bug (P Karthik's ladder was stuck at `2,3,4,5,6` because
+  sql/014's one-off re-rank script from 2026-09-16 was never actually run —
+  it's now applied too, and the trigger means this class of bug can't recur).
 - **Admin panel** (`app/admin/page.tsx`) — only for `profiles.is_admin = true`
   (others are redirected). Remove/move players on any ladder
   (`AdminLadderPanel.tsx`) + dispute queue. sql/025.
@@ -126,6 +132,9 @@ Next.js 14 (App Router) + Tailwind CSS + Supabase (Postgres + Auth).
 - **Offline page** — PWA has no dedicated offline fallback (see CHECKLIST 2.9)
 - **Branch not merged** — all work lives on `feature/ladder-system-overhaul`;
   `main` is the older version. Production is deployed from this branch via CLI.
+- **`sql/README.md` "Needs manual apply" is not a safe status** — it silently
+  sat unapplied for 8 days once (sql/014) and caused a real bug. Treat any
+  "Needs manual apply"/"⏳" row as urgent, or better, apply it immediately.
 
 ## 🗄️ Database facts worth knowing before writing SQL
 

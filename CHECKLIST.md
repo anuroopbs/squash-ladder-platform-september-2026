@@ -65,6 +65,8 @@
 | 4a.3b | `ladder_standings` does NOT expose email | `GET /rest/v1/ladder_standings?select=email` → 42703 | ✅ | 2026-09-23 |
 | 4a.3c | `profiles` email/phone NOT readable with anon key | `GET /rest/v1/profiles?select=email` | ✅ Blocked (42501), sql/029 | 2026-09-23 |
 | 4a.4 | Daily expiry-reminder cron runs | Hermes cron `squash-ladder-expiry-reminder`, last_status ok | ✅ | 2026-09-23 |
+| 4a.6 | Every ladder's ranks are a gap-free `1..N` sequence | `GET /rest/v1/ladder_standings?select=ladder_id,rank` grouped and checked | ✅ (7/7 ladders) | 2026-09-24 |
+| 4a.7 | Auto re-rank trigger fires on player removal | `pg_trigger` shows `ladder_players_rerank_after_delete` enabled | ✅ | 2026-09-24 |
 
 | 4a.5 | Signed-in pages after sql/029: /profile shows own phone, club page shows phones to members, /admin shows contacts | Manual, signed in on a phone | ⚠️ Needs manual check (agent can't sign in) | — |
 
